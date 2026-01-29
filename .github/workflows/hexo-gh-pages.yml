@@ -35,6 +35,8 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: install dependences
+        run: cd isaacSimPlusRos2
+      - name: install dependences
         run: npm install
       - name: Build with Hexo
         run: hexo generate 
