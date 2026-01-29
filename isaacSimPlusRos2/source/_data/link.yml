@@ -1,0 +1,7 @@
+- class_name: 友情鏈接
+  class_desc: 那些人，那些事
+  link_list:
+    - name: Mryan2005
+      link: https://mryan2005.top
+      avatar: /img/avatar.png
+      descr: 本站作者的個人主页

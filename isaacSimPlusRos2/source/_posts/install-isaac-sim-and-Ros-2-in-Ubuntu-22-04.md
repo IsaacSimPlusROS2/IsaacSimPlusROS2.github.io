@@ -1,7 +1,8 @@
 ---
 title: 在 Ubuntu 上安装 Isaac Sim 和 ROS 2 Humble
 date: 2026-01-29 13:46:25
-tags:
+tags: [Isaac Sim, ROS 2, Ubuntu]
+categories: [安装教程]
 ---
 
 ## Ubuntu的选择
