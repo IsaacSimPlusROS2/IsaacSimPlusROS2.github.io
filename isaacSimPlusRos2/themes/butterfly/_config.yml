@@ -296,7 +296,7 @@ aside:
       link: https://github.com/Mryan2005
   card_announcement:
     enable: true
-    content: 这里是存放Isaac Sim Plus ROS 2相关教程和资源的地方，欢迎大家多多关注！
+    content: 这里是存放Isaac Sim Plus ROS 2相关教程的地方，欢迎大家多多关注！
   card_recent_post:
     enable: true
     # If set 0 will show all
