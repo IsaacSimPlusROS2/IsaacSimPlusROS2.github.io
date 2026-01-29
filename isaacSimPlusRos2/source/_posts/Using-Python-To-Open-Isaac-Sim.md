@@ -2,7 +2,7 @@
 title: 使用 Python 打开 Isaac Sim
 date: 2026-01-29 18:13:32
 tags: [Isaac Sim, Python]
-categories: [示例教程]
+categories: [安装教程]
 ---
 
 ## 前言
