@@ -50,7 +50,7 @@ sun.CreateIntensityAttr(2000.0)
 sun.CreateAngleAttr(1.0)
 ```
 
-## 创建一个 Cuba
+## 创建一个 Cube
 
 ```python
 from isaacsim.core.api.objects.cuboid import DynamicCuboid
@@ -87,3 +87,7 @@ franka.Load()
 > 如何查看呢？看下图
 > ![](/imgs/image4.png)
 > 选择 `Copy URL Link` 即可
+
+## 源代码
+
+[点击前往 GitHub 查看](https://github.com/IsaacSimPlusROS2/create-a-simple-world/blob/main/world.py)
