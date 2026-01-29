@@ -56,7 +56,7 @@ source isaac-sim地址/setup_conda_env.sh
 source isaac-sim地址/setup_ros_env.sh
 ```
 
-## 写出第一个 Python 代码来启动 Isaac Sim
+## 写出 Python 代码来启动 Isaac Sim
 
 ```python
 from isaacsim import SimulationApp
