@@ -31,7 +31,7 @@ tags:
 
 ## 安装ROS 2
 
-【ROS2实战】在中国地区 Ubuntu 22.04 上安装 ROS 2 Humble 教程
+[【ROS2实战】在中国地区 Ubuntu 22.04 上安装 ROS 2 Humble 教程](https://zhuanlan.zhihu.com/p/1905555826527174743)
 
 ## 安装 Isaac Sim
 
