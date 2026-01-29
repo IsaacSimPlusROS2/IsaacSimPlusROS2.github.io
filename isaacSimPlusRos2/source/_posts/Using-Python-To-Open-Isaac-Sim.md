@@ -52,5 +52,27 @@ conda activate isaaclab
 在 `~/.bashrc` 文件中添加以下内容：
 
 ```bash
-source 
+source isaac-sim地址/setup_conda_env.sh
+source isaac-sim地址/setup_ros_env.sh
 ```
+
+## 写出第一个 Python 代码来启动 Isaac Sim
+
+```python
+from isaacsim import SimulationApp
+
+simulation_app = SimulationApp({"headless": False})
+
+from isaacsim.core.api import World
+
+world = World(stage_units_in_meters=1.0)
+stage = world.stage
+
+world.reset()
+while simulation_app.is_running():
+    world.step(render=True)
+
+simulation_app.close()
+```
+
+理论上，如果配置成功，你就会看到 Isaac Sim Python 5.1
