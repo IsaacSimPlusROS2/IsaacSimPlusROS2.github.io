@@ -73,4 +73,4 @@ Isaac Sim第一次启动会有些慢
 
 ## 参考资料
 
-<span id="footnote-1">1</span>. [ubuntu22.04物理机双系统手动分区](https://blog.csdn.net/itas109/article/details/136995139)
+<span id="footnote-1" style="font-size: var(--global-font-size);">1</span>. [ubuntu22.04物理机双系统手动分区](https://blog.csdn.net/itas109/article/details/136995139)
