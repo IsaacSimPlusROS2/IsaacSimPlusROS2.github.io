@@ -2,7 +2,7 @@
 title: 创建一个简单的世界
 date: 2026-01-29 23:12:09
 tags: [Isaac Sim, Python]
-categories: [安装教程]
+categories: [示例教程]
 ---
 
 ## 如何启动 Isaac Sim
