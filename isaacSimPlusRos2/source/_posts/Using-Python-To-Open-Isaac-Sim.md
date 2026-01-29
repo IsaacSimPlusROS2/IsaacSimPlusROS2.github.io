@@ -66,7 +66,6 @@ simulation_app = SimulationApp({"headless": False})
 from isaacsim.core.api import World
 
 world = World(stage_units_in_meters=1.0)
-stage = world.stage
 
 world.reset()
 while simulation_app.is_running():
