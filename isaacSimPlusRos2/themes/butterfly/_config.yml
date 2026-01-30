@@ -1108,7 +1108,7 @@ CDN:
     # docsearch_js:
     # egjs_infinitegrid:
     # fancybox:
-    fancybox_css: https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css
+    # fancybox_css: https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css
     # fireworks:
     # fontawesome:
     # gitalk:
