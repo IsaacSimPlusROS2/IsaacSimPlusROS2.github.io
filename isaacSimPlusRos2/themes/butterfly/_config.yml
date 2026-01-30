@@ -457,7 +457,7 @@ busuanzi:
 math:
   # Choose: mathjax, katex
   # Leave it empty if you don't need math
-  use:
+  use: katex
   per_page: true
   hide_scrollbar: false
 
@@ -748,6 +748,8 @@ ad:
 # --------------------------------------
 
 site_verification:
+  - name: msvalidate.01
+    content: F54DB4DFF58671B7A250ECF78F1BE71F
   # - name: google-site-verification
   #   content: xxxxxx
   # - name: baidu-site-verification
@@ -1106,15 +1108,15 @@ CDN:
     # docsearch_js:
     # egjs_infinitegrid:
     # fancybox:
-    # fancybox_css:
+    fancybox_css: https://cdn.bootcdn.net/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css
     # fireworks:
     # fontawesome:
     # gitalk:
     # gitalk_css:
     # giscus:
     # instantpage:
-    # katex:
-    # katex_copytex:
+    katex: https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.css
+    katex_copytex: https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/contrib/copy-tex.min.js
     # lazyload:
     # local_search:
     # main:
@@ -1127,8 +1129,8 @@ CDN:
     # prismjs_js:
     # prismjs_lineNumber_js:
     # pjax:
-    # sharejs:
-    # sharejs_css:
+    sharejs: https://cdn.bootcdn.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js
+    sharejs_css: https://cdn.bootcdn.net/ajax/libs/social-share.js/1.0.16/css/share.min.css
     # snackbar:
     # snackbar_css:
     # translate:
