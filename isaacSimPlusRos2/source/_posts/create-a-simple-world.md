@@ -2,7 +2,7 @@
 title: 创建一个简单的世界
 date: 2026-01-29 23:12:09
 tags: [Isaac Sim, Python]
-categories: [示例教程]
+categories: [初级]
 ---
 
 ## 如何启动 Isaac Sim
@@ -26,6 +26,24 @@ simulation_app.close()
 ```
 
 理论上，如果配置成功，你就会看到 Isaac Sim Python 5.1
+
+## 加载 Ros 2
+
+```python
+import omni.kit.app
+from isaacsim.core.utils.extensions import enable_extension
+
+# 先启用扩展
+enable_extension("omni.graph.action")
+enable_extension("omni.syntheticdata")
+enable_extension("isaacsim.ros2.bridge")  # 新版扩展名
+enable_extension("omni.isaac.ros2_bridge")  # 兼容旧版
+enable_extension("omni.replicator.core")    # 用于 render_product
+
+# 让扩展完全加载
+for _ in range(10):
+    omni.kit.app.get_app().update()
+```
 
 ## 获得舞台
 
