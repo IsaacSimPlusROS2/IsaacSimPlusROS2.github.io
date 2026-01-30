@@ -1115,7 +1115,7 @@ CDN:
     # gitalk_css:
     # giscus:
     # instantpage:
-    katex: https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.min.css
+    katex: https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/katex.css
     katex_copytex: https://cdn.bootcdn.net/ajax/libs/KaTeX/0.16.9/contrib/copy-tex.min.js
     # lazyload:
     # local_search:

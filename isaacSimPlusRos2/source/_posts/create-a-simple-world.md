@@ -86,7 +86,7 @@ UsdGeom.Gprim(cube_prim).CreateDisplayColorAttr([(1.0, 0.2, 0.2)])
 ```
 
 > 且看上面的代码  
-> 我们在 $x$ 为 0.6, $y$ 为  0.0, $z$ 为 0.4 的地方上面创建了一个大小是 0.08 的 cube
+> 我们在 $x$ 为 0.6, $y$ 为 0.0, $z$ 为 0.4 的地方上面创建了一个大小是 0.08 的 cube
 
 ## 创建一个 Franka 机械臂
 
