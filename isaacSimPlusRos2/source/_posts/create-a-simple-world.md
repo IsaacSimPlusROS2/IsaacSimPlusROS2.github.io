@@ -27,7 +27,7 @@ simulation_app.close()
 
 理论上，如果配置成功，你就会看到 Isaac Sim Python 5.1
 
-## 加载 Ros 2
+## 加载 Ros 2 Bridge 等扩展
 
 ```python
 import omni.kit.app
