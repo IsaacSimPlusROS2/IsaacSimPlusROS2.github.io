@@ -7,11 +7,11 @@
       descr: 本站作者的个人主页
     - name: Mryan2005的Blog
       link: https://blog.mryan2005.top
-      avatar: /img/logo.png
+      avatar: https://i0.wp.com/tvax2.sinaimg.cn/large/008pCFvqgy1hxx5523desj30bz0bz45a.jpg
       descr: 本站作者的个人Blog
     - name: Isaac Sim Plus ROS2
       link: https://github.com/IsaacSimPlusROS2
-      avatar: /img/logo.png
+      avatar: https://static.vecteezy.com/system/resources/previews/025/270/403/original/github-logo-icon-free-vector.jpg
       descr: Isaac Sim Plus ROS2 相关资源汇总
 - class_name: 一些资源
   class_desc: 可能对你有用的资源
