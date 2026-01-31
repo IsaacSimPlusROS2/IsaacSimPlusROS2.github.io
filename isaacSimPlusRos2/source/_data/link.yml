@@ -1,7 +1,26 @@
-- class_name: 友情鏈接
+- class_name: 友情链接
   class_desc: 那些人，那些事
   link_list:
     - name: Mryan2005
       link: https://mryan2005.top
       avatar: /img/avatar.png
-      descr: 本站作者的個人主页
+      descr: 本站作者的个人主页
+    - name: Mryan2005的Blog
+      link: https://blog.mryan2005.top
+      avatar: /img/logo.png
+      descr: 本站作者的个人Blog
+    - name: Isaac Sim Plus ROS2
+      link: https://github.com/IsaacSimPlusROS2
+      avatar: /img/logo.png
+      descr: Isaac Sim Plus ROS2 相关资源汇总
+- class_name: 一些资源
+  class_desc: 可能对你有用的资源
+  link_list:
+    - name: NVIDIA Isaac Sim
+      link: https://developer.nvidia.com/isaac-sim
+      avatar: https://www.nvidia.com/content/dam/en-zz/Solutions/gtcf20/omniverse/refresh-open-beta/nvidia-omniverse-isaac-sim-icon-128.png
+      descr: NVIDIA 官方仿真平台 Isaac Sim
+    - name: ROS2 中文网
+      link: https://docs.ros.org/zh-CN/foxy/index.html
+      avatar: https://github.com/openrobotics/artwork/blob/master/orgunits/ros.png?raw=true
+      descr: ROS2 官方中文文档
