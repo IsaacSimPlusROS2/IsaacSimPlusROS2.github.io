@@ -7,4 +7,4 @@ categories: [机器介绍]
 
 ## FrankaPanda 的长相
 
-！[FrankaPanda 的长相](image5.png)
+![FrankaPanda 的长相](image5.png)
