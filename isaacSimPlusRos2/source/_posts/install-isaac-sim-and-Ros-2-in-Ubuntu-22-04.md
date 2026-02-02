@@ -60,15 +60,15 @@ Isaac Sim第一次启动会有些慢
 
 在这个 `Action Graph` 绘出下图
 
-![](/imgs/image1.png)
+![Action Graph](/imgs/image1.png)
 
 然后，点击 `play`
 
-![](/imgs/image2.png)
+![点击 `play`](/imgs/image2.png)
 
 在 Linux 命令行之内运行`ros2 topic echo /clock`，最后会出现时间信息，说明连接成功
 
-![alt text](/imgs/image3.png)
+![Linux 命令行之内运行`ros2 topic echo /clock`](/imgs/image3.png)
 
 ***
 
