@@ -24,3 +24,7 @@
       link: https://docs.ros.org/zh-CN/foxy/index.html
       avatar: https://github.com/openrobotics/artwork/blob/master/orgunits/ros.png?raw=true
       descr: ROS2 官方中文文档
+    - name: Berkeley Humanoid Lite
+      link: https://berkeley-humanoid-lite.gitbook.io
+      avatar: https://avatars.githubusercontent.com/u/10053058?s=200&v=4
+      descr: Berkeley Humanoid Lite 官方文档
