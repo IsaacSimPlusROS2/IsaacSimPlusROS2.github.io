@@ -5,6 +5,8 @@ tags: [Berkeley Humanoid Lite, Python]
 categories: Berkeley Humanoid Lite
 ---
 
+## 前期提要
+
 在Berkeley Humanoid Lite的[getting-started-with-software/training-environment](https://berkeley-humanoid-lite.gitbook.io/docs/getting-started-with-software/training-environment)中，给出了安装 Training Environment 的办法。
 
 这里就不说了，我写一些我遇到的问题的解决方法
