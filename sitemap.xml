@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/</loc>
+    
+    <lastmod>2026-02-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://isaacsimplusros2.mryan2005.top/2026/01/29/install-isaac-sim-and-Ros-2-in-Ubuntu-22-04/</loc>
     
     <lastmod>2026-02-10</lastmod>
@@ -12,6 +21,42 @@
   
   <url>
     <loc>https://isaacsimplusros2.mryan2005.top/2026/01/29/Using-Python-To-Open-Isaac-Sim/</loc>
+    
+    <lastmod>2026-02-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-bimanual-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    
+    <lastmod>2026-02-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-humanoid-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    
+    <lastmod>2026-02-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    
+    <lastmod>2026-02-10</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-mujoco-py-of-Berkeley-Humanoid-Lite/</loc>
     
     <lastmod>2026-02-10</lastmod>
     
@@ -57,51 +102,6 @@
   
   <url>
     <loc>https://isaacsimplusros2.mryan2005.top/2026/01/29/create-a-simple-world/</loc>
-    
-    <lastmod>2026-02-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/</loc>
-    
-    <lastmod>2026-02-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-bimanual-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
-    
-    <lastmod>2026-02-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-humanoid-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
-    
-    <lastmod>2026-02-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
-    
-    <lastmod>2026-02-10</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-mujoco-py-of-Berkeley-Humanoid-Lite/</loc>
     
     <lastmod>2026-02-10</lastmod>
     
