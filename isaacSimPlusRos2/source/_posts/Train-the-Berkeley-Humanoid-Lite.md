@@ -123,9 +123,10 @@ export ISAACLAB_EXP_FILE="$ISAACSIM_PATH/apps/isaacsim.python.kit"
 
 cd $PROJECT_ROOT
 
-$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/play.py \
+$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/playNew.py \
     --task Velocity-Berkeley-Humanoid-Lite-v0 \
-    --num_envs 1
+    --num_envs 1 \
+    --load_run 2026-02-10_15-54-39
 ```
 
 ### ## 编写 run_train.sh
@@ -208,140 +209,211 @@ $ISAACSIM_PATH/python.sh -m pip install git+https://github.com/leggedrobotics/rs
 
 ## Isaac Lab 0.54+ API 的剧烈变动
 
-### 修改 ./scripts/rsl_rl/play.py 的代码
+### 修改 ./scripts/rsl_rl/playNew.py 的代码
 
-其实，./scripts/rsl_rl/play.py的代码在 Isaac Sim 5.1 下是有问题的，所以，得修改成这样
+我们可以按照 train.py 来写一个 playNew.py 的代码，从而可以看到训练结果
 
 ```python
-# scripts/rsl_rl/play.py
+"""
+使用 RSL-RL v1.0.2 推理/预览 Berkeley Humanoid Lite 的脚本。
+结构严格仿照 train.py，适配 Isaac Sim 5.1。
+"""
 
 import argparse
 import os
 import sys
+import torch
 
-# --- [关键] 1. 初始化 AppLauncher (必须最先导入) ---
+# --- [1] 初始化 AppLauncher (必须最先导入) ---
 from isaaclab.app import AppLauncher
 
-# 将当前目录加入路径以便导入 cli_args.py
+# 解决本地导入
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import cli_args
+import cli_args  # isort: skip
 
-# 解析参数
-parser = argparse.ArgumentParser(description="Play an RL agent with RSL-RL.")
-parser.add_argument("--video", action="store_true", default=False, help="是否录制视频")
-parser.add_argument("--video_length", type=int, default=200, help="录制视频步数")
-parser.add_argument("--disable_fabric", action="store_true", default=False, help="禁用 Fabric")
-parser.add_argument("--num_envs", type=int, default=None, help="仿真环境数量")
+parser = argparse.ArgumentParser(description="Play/Inference with RSL-RL agent.")
+parser.add_argument("--num_envs", type=int, default=1, help="仿真环境数量(预览通常为1)")
 parser.add_argument("--task", type=str, default=None, help="任务名称")
-
-# 添加 RSL-RL 和 AppLauncher 的参数
+parser.add_argument("--seed", type=int, default=None, help="随机种子")
+# 添加 RSL-RL 参数
 cli_args.add_rsl_rl_args(parser)
 AppLauncher.add_app_launcher_args(parser)
-args_cli, _ = parser.parse_known_args()
+args_cli, hydra_args = parser.parse_known_args()
 
-# 启动仿真 App
+# 强制开启图形界面
+args_cli.headless = False
+
+sys.argv = [sys.argv[0]] + hydra_args
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
-# --- [关键] 2. 仿真启动后的导入 ---
+# --- [2] 仿真启动后的导入 ---
 import gymnasium as gym
-import torch
 from omegaconf import OmegaConf
 
 from rsl_rl.runners import OnPolicyRunner
+from rsl_rl.algorithms import PPO
+from rsl_rl.modules import ActorCritic
 
-import isaaclab.utils.string as string_utils
 from isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agent
-from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, export_policy_as_jit, export_policy_as_onnx
-from isaaclab_tasks.utils import get_checkpoint_path, parse_env_cfg
+from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
+from isaaclab_tasks.utils import get_checkpoint_path
+from isaaclab_tasks.utils.hydra import hydra_task_config
+from isaaclab.utils.dict import class_to_dict
 
-# 导入自定义任务包以注册环境
 import berkeley_humanoid_lite.tasks  # noqa: F401
 
-def main():
-    """推理主函数"""
+# --- [兼容层] 复用 Wrapper ---
+class RslRlVecEnvWrapperFixed(RslRlVecEnvWrapper):
+    def __init__(self, env):
+        self.env = env
+        base_env = env.unwrapped
+        self.unwrapped_env = base_env 
+        self.device = base_env.device
+        
+        obs_manager = base_env.observation_manager
+        
+        def _to_int(val):
+            if isinstance(val, (tuple, list)): return int(val[0])
+            return int(val)
+
+        self.num_obs = _to_int(obs_manager.group_obs_dim["policy"])
+        self.num_actions = _to_int(base_env.action_manager.total_action_dim)
+        self.num_envs = base_env.num_envs
+
+        if "critic" in obs_manager.group_obs_dim:
+            self.num_privileged_obs = _to_int(obs_manager.group_obs_dim["critic"])
+        else:
+            self.num_privileged_obs = None
+            
+        self.episode_length_buf = base_env.episode_length_buf
+
+    def _strip_tensordict(self, obs):
+        if obs is None: return None
+        if not isinstance(obs, torch.Tensor):
+            if isinstance(obs, dict):
+                return torch.cat(list(obs.values()), dim=-1)
+        return obs.view(obs.shape)
+
+    def get_observations(self):
+        obs = self.unwrapped.observation_manager.compute_group("policy")
+        return self._strip_tensordict(obs)
+
+    def get_privileged_observations(self):
+        if self.num_privileged_obs is not None:
+            obs = self.unwrapped.observation_manager.compute_group("critic")
+            return self._strip_tensordict(obs)
+        return None
+
+    def step(self, actions):
+        obs_dict, rew, terminated, truncated, extras = self.env.step(actions)
+        obs = self._strip_tensordict(obs_dict["policy"])
+        privileged_obs = None
+        if "critic" in obs_dict:
+            privileged_obs = self._strip_tensordict(obs_dict["critic"])
+        elif self.num_privileged_obs is not None:
+            privileged_obs = self.get_privileged_observations()
+        dones = terminated | truncated
+        return obs, privileged_obs, rew, dones, extras
     
-    # 1. 解析环境配置
-    env_cfg = parse_env_cfg(
-        args_cli.task, 
-        device=args_cli.device, 
-        num_envs=args_cli.num_envs if args_cli.num_envs is not None else 16, 
-        use_fabric=not args_cli.disable_fabric
-    )
+    def reset(self):
+        obs_dict, _ = self.env.reset()
+        obs = self._strip_tensordict(obs_dict["policy"])
+        return obs, self.get_privileged_observations()
 
-    # 2. 解析 RSL-RL Agent 配置
-    agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)
+# --- [参数过滤器] ---
+def filter_dict(raw_dict, whitelist):
+    return {k: v for k, v in raw_dict.items() if k in whitelist}
 
-    # 3. 寻找模型路径
+PPO_WHITELIST = ['value_loss_coef', 'use_clipped_value_loss', 'clip_param', 'entropy_coef', 
+                 'num_learning_epochs', 'num_mini_batches', 'learning_rate', 'schedule', 
+                 'gamma', 'lam', 'desired_kl', 'max_grad_norm']
+POLICY_WHITELIST = ['init_noise_std', 'actor_hidden_dims', 'critic_hidden_dims', 'activation']
+
+# -------------------------------------------------------
+
+@hydra_task_config(args_cli.task, "rsl_rl_cfg_entry_point")
+def main(env_cfg, agent_cfg: RslRlOnPolicyRunnerCfg):
+    # 1. 同步参数
+    agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
+    env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else 1
+
+    # === 地形与高度修正 ===
+    if hasattr(env_cfg.scene, "terrain"):
+        print("[INFO] Play模式: 强制地形为无限平面 (Plane)")
+        env_cfg.scene.terrain.terrain_type = "plane"
+        env_cfg.scene.terrain.terrain_generator = None 
+    
+    if hasattr(env_cfg.scene, "robot"):
+        env_cfg.scene.robot.init_state.pos = (0.0, 0.0, 0)
+        print("[INFO] Play模式: 强制初始高度为 1.05m")
+
+    # 2. 设置日志根目录
     log_root_path = os.path.join("logs", "rsl_rl", agent_cfg.experiment_name)
     log_root_path = os.path.abspath(log_root_path)
     
+    # 3. 寻找 Checkpoint
+    load_run = agent_cfg.load_run
+    if load_run == "-1":
+        load_run = None
+    
     resume_path = None
     try:
-        resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
-        print(f"[INFO] 找到模型文件: {resume_path}")
+        resume_path = get_checkpoint_path(log_root_path, load_run, agent_cfg.load_checkpoint)
+        print(f"[INFO] 加载模型路径: {resume_path}")
     except Exception as e:
-        print(f"[WARN] 未能自动找到模型: {e}")
-        fallback_path = os.path.join("checkpoints", "policy_humanoid.pt")
-        if os.path.exists(fallback_path):
-            resume_path = fallback_path
-            print(f"[INFO] 使用备用模型: {resume_path}")
-        else:
-            print("[INFO] 警告：未找到模型权重，进入“零动作测试模式”。")
+        print(f"[ERROR] 无法找到模型 checkpoint: {e}")
+        simulation_app.close()
+        sys.exit(1)
 
     # 4. 创建环境
-    render_mode = "rgb_array" if args_cli.video else None
     print(f"[INFO] 正在创建环境: {args_cli.task}")
-    env = gym.make(args_cli.task, cfg=env_cfg, render_mode=render_mode)
-
-    # 5. 录制视频包装
-    if args_cli.video and resume_path:
-        log_dir = os.path.dirname(resume_path)
-        video_kwargs = {
-            "video_folder": os.path.join(log_dir, "videos", "play"),
-            "step_trigger": lambda step: step == 0,
-            "video_length": args_cli.video_length,
-            "disable_logger": True,
-        }
-        env = gym.wrappers.RecordVideo(env, **video_kwargs)
-
-    # 6. 环境包装
+    env = gym.make(args_cli.task, cfg=env_cfg)
     if isinstance(env.unwrapped, DirectMARLEnv):
         env = multi_agent_to_single_agent(env)
     
-    # RslRlVecEnvWrapper 会规范化输入输出，供 RSL-RL 使用
-    env = RslRlVecEnvWrapper(env)
+    env = RslRlVecEnvWrapperFixed(env)
 
-    # --- 获取精确的维度信息 ---
-    num_envs = env.num_envs
-    num_actions = env.num_actions
-    device = env.unwrapped.device
-
-    # 7. 策略实例化
-    if resume_path:
-        ppo_runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
-        ppo_runner.load(resume_path)
-        policy = ppo_runner.get_inference_policy(device=device)
-    else:
-        print(f"[INFO] 运行零动作策略 (维度: {num_envs} envs x {num_actions} actions)...")
-        # 修复点：显式使用正确的维度 (num_envs, num_actions)
-        def policy(obs):
-            return torch.zeros((num_envs, num_actions), device=device)
-
-    # 8. 仿真循环
-    print(f"[INFO] 启动成功，正在运行...")
+    # 5. 构造 Runner 配置
+    raw_dict = class_to_dict(agent_cfg) if not isinstance(agent_cfg, dict) else agent_cfg
     
-    # 获取初始观测 (RslRlVecEnvWrapper 返回单个 Tensor)
-    obs = env.get_observations()
+    # === [关键修复] 补全 runner 所需的所有键值 ===
+    rsl_cfg = {
+        "runner": {
+            "policy_class_name": "ActorCritic",
+            "algorithm_class_name": "PPO",
+            "experiment_name": agent_cfg.experiment_name,
+            "checkpoint": resume_path,
+            
+            # --- 以下是本次修复补充的必要参数 ---
+            "num_steps_per_env": agent_cfg.num_steps_per_env,  # 解决 KeyError
+            "max_iterations": agent_cfg.max_iterations,        # 初始化需要
+            "save_interval": agent_cfg.save_interval,          # 初始化需要
+            "run_name": agent_cfg.run_name,
+        },
+        "algorithm": filter_dict(raw_dict.get("algorithm", {}), PPO_WHITELIST),
+        "policy": filter_dict(raw_dict.get("policy", {}), POLICY_WHITELIST),
+    }
+
+    # 6. 初始化 Runner
+    # log_dir=None 表示不创建新的日志文件夹
+    runner = OnPolicyRunner(env, rsl_cfg, log_dir=None, device=agent_cfg.device)
+    runner.load(resume_path)
     
+    policy = runner.get_inference_policy(device=env.device)
+
+    # 7. 推理循环
+    print("-" * 80)
+    print("[INFO] 启动成功！在 Isaac Sim 中按 'F' 键跟随机器人。")
+    print("-" * 80)
+
+    obs, _ = env.reset()
+
     while simulation_app.is_running():
         with torch.inference_mode():
-            # 策略推理
             actions = policy(obs)
-            # 步进：返回 obs, rewards, terminations, extras
-            obs, rewards, terminations, extras = env.step(actions)
+            obs, _, _, _, _ = env.step(actions)
 
-    # 9. 资源清理
     env.close()
 
 if __name__ == "__main__":
