@@ -129,7 +129,7 @@ $ISAACSIM_PATH/python.sh ./scripts/rsl_rl/playNew.py \
     --load_run 2026-02-10_15-54-39
 ```
 
-### ## 编写 run_train.sh
+### 编写 run_train.sh
 
 ```bash
 #!/bin/bash
