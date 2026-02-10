@@ -9,7 +9,7 @@ categories: Berkeley Humanoid Lite
 
 在Berkeley Humanoid Lite的[getting-started-with-software/training-environment](https://berkeley-humanoid-lite.gitbook.io/docs/getting-started-with-software/training-environment)中，给出了安装 Training Environment 的办法。
 
-[getting-started-with-software](https://berkeley-humanoid-lite.gitbook.io/docs/getting-started-with-software/training-environment)部分主要讲述了一件事：通过不断的“试错”，把一个只会原地瘫倒的机器人 3D 模型，训练成一个能跑、能跳、能平衡的“智能体”。
+[getting-started-with-software](https://berkeley-humanoid-lite.gitbook.io/docs/getting-started-with-software/training-environment)部分主要讲述了一件事：**通过不断的“试错”，把一个只会原地瘫倒的机器人 3D 模型，训练成一个能跑、能跳、能平衡的“智能体”**。
 
 这里就不说了，我写一些我遇到的问题的解决方法
 
