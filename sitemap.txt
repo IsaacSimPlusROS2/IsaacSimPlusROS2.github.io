@@ -1,6 +1,6 @@
 https://isaacsimplusros2.mryan2005.top/2026/01/29/install-isaac-sim-and-Ros-2-in-Ubuntu-22-04/
-https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/
 https://isaacsimplusros2.mryan2005.top/2026/01/29/Using-Python-To-Open-Isaac-Sim/
+https://isaacsimplusros2.mryan2005.top/2026/02/11/The-Berkeley-Humanoid-Lite-scripts-sim2real-visualize-py-of-Berkeley-Humanoid-Lite-Lowlevel/
 https://isaacsimplusros2.mryan2005.top/2026/02/10/The-bimanual-py-of-Berkeley-Humanoid-Lite-Lowlevel/
 https://isaacsimplusros2.mryan2005.top/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/
 https://isaacsimplusros2.mryan2005.top/2026/02/10/The-humanoid-py-of-Berkeley-Humanoid-Lite-Lowlevel/
@@ -10,6 +10,7 @@ https://isaacsimplusros2.mryan2005.top/2026/02/10/The-recoil-can-py-of-Berkeley-
 https://isaacsimplusros2.mryan2005.top/2026/02/10/The-recoil-core-py-of-Berkeley-Humanoid-Lite-Lowlevel/
 https://isaacsimplusros2.mryan2005.top/2026/02/10/Train-the-Berkeley-Humanoid-Lite/
 https://isaacsimplusros2.mryan2005.top/2026/01/29/create-a-simple-world/
+https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/
 https://isaacsimplusros2.mryan2005.top/2026/01/29/Franka-Catches-A-Cube/
 https://isaacsimplusros2.mryan2005.top/tags/index.html
 https://isaacsimplusros2.mryan2005.top/link/index.html
