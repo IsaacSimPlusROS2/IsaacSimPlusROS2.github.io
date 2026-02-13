@@ -309,3 +309,255 @@ self.right_arm_transport.stop()
 self.left_leg_transport.stop()
 self.right_leg_transport.stop()
 ```
+
+### `get_observations` 方法
+
+#### 内存视图切片
+
+```python
+imu_quaternion = self.lowlevel_states[0:4]       # 0-3: 四元数 (w, x, y, z)
+imu_angular_velocity = self.lowlevel_states[4:7] # 4-6: 角速度
+joint_positions = self.lowlevel_states[7:19]     # 7-18: 12个关节的角度
+joint_velocities = self.lowlevel_states[19:31]   # 19-30: 12个关节的速度
+mode = self.lowlevel_states[31:32]               # 31: 当前运行模式
+velocity_commands = self.lowlevel_states[32:35]  # 32-34: 目标线速度x, y 和角速度yaw
+```
+
+#### 更新传感器数据
+
+它的核心任务是将来自不同硬件（IMU、电机、手柄）的离散数据，封装成一个符合神经网络输入要求的 ** 35 维观测向量**
+
+```python
+# 从 IMU 线程读取最新的四元数数据
+imu_quaternion[:] = self.imu.quaternion[:]
+
+# 【关键】单位转换：IMU 返回的是度/秒 (deg/s)，但 RL 算法期望弧度/秒 (rad/s)
+# 必须在此转换，否则机器人会因为感知的旋转速度过大而疯狂抽搐
+imu_angular_velocity[:] = np.deg2rad(self.imu.angular_velocity[:])
+
+# 将底层 CAN 总线读取到的电机实际位置和速度填入缓冲区
+joint_positions[:] = self.joint_position_measured[:]
+joint_velocities[:] = self.joint_velocity_measured[:]
+```
+
+#### 更新用户指令
+
+```python
+# 读取手柄上的模式开关（如：切换到 3.0 代表开启 RL 行走）
+mode[0] = self.command_controller.commands["mode_switch"]
+
+# 读取摇杆给出的目标速度
+velocity_commands[0] = self.command_controller.commands["velocity_x"]
+velocity_commands[1] = self.command_controller.commands["velocity_y"]
+velocity_commands[2] = self.command_controller.commands["velocity_yaw"]
+
+# 将手柄的模式指令同步到系统状态机的“下一状态”变量中
+self.next_state = self.command_controller.commands["mode_switch"]
+
+# 返回填充完毕的完整 35 维向量
+return self.lowlevel_states
+```
+
+### `update_joint_group` 方法
+
+#### 从算法到硬件 (Sim -> Real)
+
+##### 计算相对位置
+
+```python
+position_target_l = (self.joint_position_target[joint_id_l] + self.position_offsets[joint_id_l]) * self.joint_axis_directions[joint_id_l]
+position_target_r = (self.joint_position_target[joint_id_r] + self.position_offsets[joint_id_r]) * self.joint_axis_directions[joint_id_r]
+```
+
+##### 发送 CAN 数据包
+
+```python
+# self.joints[id][0] 是 Bus 对象，[id][1] 是电机 ID
+# transmit_pdo_2 是一种高效的实时数据帧，同时发送位置目标。
+# 这里将 velocity_target 设为 0，意味着主要依靠电机的内部位置环(Kp)来跟踪。
+self.joints[joint_id_l][0].transmit_pdo_2(self.joints[joint_id_l][1], position_target=position_target_l, velocity_target=0.0)
+self.joints[joint_id_r][0].transmit_pdo_2(self.joints[joint_id_r][1], position_target=position_target_r, velocity_target=0.0)   
+```
+
+#### 从硬件到算法 (Real -> Sim)
+
+##### 接收电机反馈
+
+```python
+position_measured_l, velocity_measured_l = self.joints[joint_id_l][0].receive_pdo_2(self.joints[joint_id_l][1])
+position_measured_r, velocity_measured_r = self.joints[joint_id_r][0].receive_pdo_2(self.joints[joint_id_r][1])
+```
+
+##### 逆向转换
+
+```python
+if position_measured_l is not None:
+    # 逆公式：算法测量位置 = (硬件原始位置 * 轴向系数) - 校准偏移
+    self.joint_position_measured[joint_id_l] = (position_measured_l * self.joint_axis_directions[joint_id_l]) - self.position_offsets[joint_id_l]
+
+if velocity_measured_l is not None:
+    # 速度只需要修正方向，不需要修正偏置（导数不含常数项）
+    self.joint_velocity_measured[joint_id_l] = velocity_measured_l * self.joint_axis_directions[joint_id_l]
+
+# 右腿执行同样的逻辑
+if position_measured_r is not None:
+    self.joint_position_measured[joint_id_r] = (position_measured_r * self.joint_axis_directions[joint_id_r]) - self.position_offsets[joint_id_r]
+
+if velocity_measured_r is not None:
+    self.joint_velocity_measured[joint_id_r] = velocity_measured_r * self.joint_axis_directions[joint_id_r]
+```     
+
+### `reset` 方法
+
+重置机器人环境接口。
+
+```python
+def reset(self):
+    # 1. 调用 get_observations() 获取当前硬件的最底层状态（IMU、关节、手柄指令）
+    obs = self.get_observations()
+    
+    # 2. 返回这个观测向量，作为策略网络推理的起点
+    return obs
+```
+
+### `step` 方法
+
+该函数通过一个有限状态机 (Finite State Machine) 来管理机器人的行为，确保机器人能够安全地从静止状态过渡到行走状态。
+
+```python
+def step(self, actions: np.ndarray):
+    """
+    执行一个控制周期。
+    参数 actions: 神经网络输出的动作向量（目标关节位置）。
+    """
+    # 使用 match-case 语法处理不同的系统状态
+    match (self.state):
+        
+        # --- 状态 1: IDLE (闲置/待机) ---
+        case State.IDLE:
+            # 目标位置始终设为当前测量值，确保电机不发力移动，保持“瘫软”或“阻尼”状态
+            self.joint_position_target[:] = self.joint_position_measured[:]
+
+            # 检查手柄是否下达了“进入初始化”的指令
+            if self.next_state == State.RL_INIT:
+                print("Switching to RL initialization mode")
+                self.state = self.next_state # 切换状态
+
+                # 遍历所有关节，将其从阻尼模式切换到位置控制模式
+                for entry in self.joints:
+                    bus, device_id, _ = entry
+                    bus.feed(device_id) # 喂狗（激活通信）
+                    bus.set_mode(device_id, recoil.Mode.POSITION) # 开启位置环控制
+
+                # 记录切换瞬间的关节位置，作为插值的起点
+                self.starting_positions = self.joint_position_target[:]
+                self.init_percentage = 0.0 # 重置插值进度
+
+        # --- 状态 2: RL_INIT (初始化过渡/缓慢站立) ---
+        case State.RL_INIT:
+            print(f"init: {self.init_percentage:.2f}")
+            # 如果进度未完成（小于 100%）
+            if self.init_percentage < 1.0:
+                # 每一帧增加 1% 的进度（如果是 500Hz 频率，则站立过程耗时 0.2 秒）
+                self.init_percentage += 1 / 100.0
+                self.init_percentage = min(self.init_percentage, 1.0) # 防止溢出
+
+                # 【核心逻辑】线性插值：让关节从初始位置平滑移动到 RL 算法要求的站立姿态
+                # 这样可以防止机器人突然“弹起”造成硬件损坏
+                self.joint_position_target = linear_interpolate(self.starting_positions, self.rl_init_positions, self.init_percentage)
+            else:
+                # 初始化完成后，检查手柄是否下达“正式运行”指令
+                if self.next_state == State.RL_RUNNING:
+                    print("Switching to RL running mode")
+                    self.state = self.next_state
+
+                # 如果用户想切回 IDLE，则进入阻尼模式
+                if self.next_state == State.IDLE:
+                    print("Switching to idle mode")
+                    self.state = self.next_state
+                    for entry in self.joints:
+                        bus, device_id, _ = entry
+                        bus.set_mode(device_id, recoil.Mode.DAMPING)
+
+        # --- 状态 3: RL_RUNNING (RL 策略正式接管控制) ---
+        case State.RL_RUNNING:
+            # 直接将神经网络输出的 actions 映射到电机的目标位置
+            for i in range(len(self.joints)):
+                self.joint_position_target[i] = actions[i]
+
+            # 检查手柄是否下达“紧急停止/切回待机”指令
+            if self.next_state == State.IDLE:
+                print("Switching to idle mode")
+                self.state = self.next_state
+                for entry in self.joints:
+                    bus, device_id, _ = entry
+                    bus.set_mode(device_id, recoil.Mode.DAMPING)
+
+    # 【执行层】将计算好的 self.joint_position_target 通过 CAN 总线发送给电机
+    self.update_joints()
+
+    # 【感知层】采集当前时刻最新的 IMU 和电机数据，封装成观测向量
+    obs = self.get_observations()
+
+    # 返回观测值，供给神经网络下一帧推理使用
+    return obs
+```
+
+### `update_joints` 方法
+
+这段代码最核心的地方在于它将 左腿（索引 0-5） 和 右腿（索引 6-11） 的对应关节进行了“成对更新”。
+
+```python
+def update_joints(self):
+    """
+    全量更新所有关节的通信函数。
+    按照 6 组配对，依次处理左腿和右腿对应的电机。
+    """
+    # 每一行代表一组对称的关节：(左腿关节索引, 右腿关节索引)
+    
+    # 1. 更新左右髋部侧摆 (Hip Roll)
+    self.update_joint_group(0, 6)
+    
+    # 2. 更新左右髋部偏航/转动 (Hip Yaw)
+    self.update_joint_group(1, 7)
+    
+    # 3. 更新左右髋部俯仰 (Hip Pitch)
+    self.update_joint_group(2, 8)
+    
+    # 4. 更新左右膝盖俯仰 (Knee Pitch)
+    self.update_joint_group(3, 9)
+    
+    # 5. 更新左右脚踝俯仰 (Ankle Pitch)
+    self.update_joint_group(4, 10)
+    
+    # 6. 更新左右脚踝侧摆 (Ankle Roll)
+    self.update_joint_group(5, 11)
+```
+
+### `check_connection` 方法
+
+遍历电机列表，逐一发送 Ping 指令并等待反馈。
+
+```python
+for entry in self.joints:
+    # 解包关节信息：总线对象、电机ID、关节名称
+    bus, device_id, joint_name = entry
+    
+    # 打印当前正在检查的关节名称
+    # end="\t" 的作用是让结果 (OK/ERROR) 显示在名称后面，而不是换行
+    print(f"Pinging {joint_name} ... ", end="\t")
+    
+    # 【核心操作】调用底层总线接口发送 Ping 帧
+    # 它会往 CAN 总线发一个查询包，如果对应 ID 的电机驱动器在线，会回传一个应答包
+    result = bus.ping(device_id)
+    
+    # 判断返回结果
+    if result:
+        print("OK")    # 通讯正常
+    else:
+        print("ERROR") # 通讯失败，可能是没通电、CAN线断了或 ID 设置错误
+    
+    # 每次检查后休眠 0.1 秒
+    # 作用：防止短时间内发送过多查询帧导致 CAN 总线拥堵，保证读取的可靠性
+    time.sleep(0.1)
+```
