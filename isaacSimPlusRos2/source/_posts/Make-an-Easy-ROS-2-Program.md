@@ -13,7 +13,7 @@ categories: [ROS 2]
 pip install rclpy
 ```
 
-## 创建 ROS 2 节点
+## 创建 ROS 2 发布节点
 
 创建一个名为 `simple_ros2_node.py` 的 Python 文件，并添加以下代码：
 
@@ -46,6 +46,44 @@ if __name__ == '__main__':
     main()
 ```
 
+## 创建 ROS 2 监听节点
+
+```python
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class MinimalSubscriber(Node):
+
+    def __init__(self):
+        super().__init__('minimal_subscriber') # 初始化节点名称
+        
+        # 创建订阅者：消息类型 String, 话题名称 'topic', 回调函数, 队列长度 10
+        self.subscription = self.create_subscription(
+            String,
+            'chatter',
+            self.listener_callback,
+            10)
+        self.subscription  # 防止变量被垃圾回收 (Python特性)
+
+    def listener_callback(self, msg):
+        # 收到消息时的回调函数
+        self.get_logger().info('I heard: "%s"' % msg.data)
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    minimal_subscriber = MinimalSubscriber()
+
+    rclpy.spin(minimal_subscriber)
+
+    minimal_subscriber.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
 ## 运行节点
 
 在终端中运行以下命令来启动你的 ROS 2 节点：
@@ -67,6 +105,14 @@ ros2 topic echo /chatter
 ```
 
 你就会看到 `data: Robot is walking...`
+
+或者
+
+```bash
+python node_two.py 
+```
+
+你就会看到 `[INFO] [1770962759.315087388] [minimal_subscriber]: I heard: "Robot is walking..."`
 
 ## 源码
 
