@@ -20,7 +20,7 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/11/The-Berkeley-Humanoid-Lite-scripts-sim2real-visualize-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/13/Make-an-Easy-ROS-2-Program/</loc>
     
     <lastmod>2026-02-13</lastmod>
     
@@ -30,6 +30,15 @@
   
   <url>
     <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-bimanual-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    
+    <lastmod>2026-02-13</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/11/The-Berkeley-Humanoid-Lite-scripts-sim2real-visualize-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
     
     <lastmod>2026-02-13</lastmod>
     
@@ -101,7 +110,7 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/01/29/create-a-simple-world/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/</loc>
     
     <lastmod>2026-02-13</lastmod>
     
@@ -110,7 +119,7 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/01/29/create-a-simple-world/</loc>
     
     <lastmod>2026-02-13</lastmod>
     
@@ -236,6 +245,13 @@
   </url>
   
   <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/categories/ROS-2/</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://isaacsimplusros2.mryan2005.top/categories/Berkeley-Humanoid-Lite/</loc>
     <lastmod>2026-02-13</lastmod>
     <changefreq>weekly</changefreq>
@@ -243,14 +259,14 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/categories/%E5%88%9D%E7%BA%A7/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/categories/FrankaPanda/</loc>
     <lastmod>2026-02-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/categories/FrankaPanda/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/categories/%E5%88%9D%E7%BA%A7/</loc>
     <lastmod>2026-02-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
