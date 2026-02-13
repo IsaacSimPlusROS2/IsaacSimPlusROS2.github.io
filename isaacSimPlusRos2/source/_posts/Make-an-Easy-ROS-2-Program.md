@@ -58,7 +58,7 @@ class MinimalSubscriber(Node):
     def __init__(self):
         super().__init__('minimal_subscriber') # 初始化节点名称
         
-        # 创建订阅者：消息类型 String, 话题名称 'topic', 回调函数, 队列长度 10
+        # 创建订阅者：消息类型 String, 话题名称 'chatter', 回调函数, 队列长度 10
         self.subscription = self.create_subscription(
             String,
             'chatter',
