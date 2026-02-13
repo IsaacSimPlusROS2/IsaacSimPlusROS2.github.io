@@ -43,7 +43,7 @@ export ROS_LOCALHOST_ONLY=0
 
 DDS 使用 UDP 协议进行大量通信。
 
-Linux 的防火墙（如 ufw 或 iptables）经常会拦截这些包。
+Linux 的防火墙（如 `ufw` 或 `iptables`）经常会拦截这些包。
 
 因此，在发布者和监听者的电脑上暂时关闭防火墙，以确保 DDS 通信畅通：
 
