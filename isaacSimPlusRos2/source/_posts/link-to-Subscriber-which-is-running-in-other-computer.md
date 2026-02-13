@@ -13,21 +13,21 @@ categories: [ROS 2]
 
 ## 实现办法
 
-### 设置 ROS_DOMAIN_ID
+### 设置 `ROS_DOMAIN_ID`
 
-ROS 2 使用 ROS_DOMAIN_ID 来隔离网络中的不同机器人群组。
+ROS 2 使用 `ROS_DOMAIN_ID` 来隔离网络中的不同机器人群组。
 
 所有电脑必须使用相同的 Domain ID。
 
-默认 ID 是 0。
+默认 ID 是 `0`。
 
-我们可以在发布者和监听者的电脑上设置相同的 ROS_DOMAIN_ID，例如：
+我们可以在发布者和监听者的电脑上设置相同的 `ROS_DOMAIN_ID`，例如：
 
 ```bash
 export ROS_DOMAIN_ID=30
 ```
 
-即将 ROS_DOMAIN_ID 设置为 30，当然，你也可以选择其他数字，只要确保发布者和监听者使用相同的值即可。
+即将 `ROS_DOMAIN_ID` 设置为 `30`，当然，你也可以选择其他数字，只要确保发布者和监听者使用相同的值即可。
 
 ### 设置 `ROS_LOCALHOST_ONLY`
 
