@@ -237,7 +237,7 @@ stop(): 退出时进入 DAMPING (阻尼) 模式。这比直接断电更安全，
 
 
 
-1. 配置常量表 (Instance Configuration)虽然这个类没有显式的 Class Constants（静态常量），但在 __init__ 中定义了固定的硬件映射配置。以下是这些硬编码配置的表格形式：
+配置常量表 (Instance Configuration)虽然这个类没有显式的 Class Constants（静态常量），但在 __init__ 中定义了固定的硬件映射配置。以下是这些硬编码配置的表格形式：
 关节映射表 (self.joints)
 
 
@@ -403,7 +403,7 @@ right_wrist_yaw_joint
 
 
 
-2. Class Bimanual 方法列表
+Class Bimanual 方法列表
 
 
 方法名
@@ -562,14 +562,464 @@ for entry in self.joints:    # 解包关节信息：总线对象、电机ID、�
       </tags>
   </entry>
   <entry>
-    <title>The robot/imu.py of Berkeley Humanoid Lite Lowlevel</title>
+    <title>Berkeley Humanoid Lite Lowlevel 的 robot/imu.py</title>
     <url>/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
-    <content><![CDATA[]]></content>
-  </entry>
-  <entry>
-    <title>Berkeley Humanoid Lite 的 environments/mujoco.py</title>
-    <url>/2026/02/10/The-mujoco-py-of-Berkeley-Humanoid-Lite/</url>
-    <content><![CDATA[MujocoEnvMujocoVisualizerMujocoSimulator]]></content>
+    <content><![CDATA[代码功能详解A. 核心逻辑
+通信协议：IMU 通过串口发送二进制数据帧。每一帧以 0x55 开头，紧接着是帧类型（Frame Type），然后是数据载荷。
+**数据解析 (__read_frame)**：
+代码不断读取串口数据，利用 struct.unpack 将二进制数据转换为整数。
+物理量转换：原始整数数据被转换为物理单位。例如，加速度的原始值除以 32768.0 再乘以量程 16.0，得到单位为 $g$ 的加速度。
+支持的数据类型包括：加速度、角速度、欧拉角（Roll&#x2F;Pitch&#x2F;Yaw）、磁场、四元数。
+
+
+**多线程运行 (run_forever)**：
+为了不阻塞主程序的运行，驱动开启了一个后台线程（threading.Thread）专门负责读取串口数据并更新类的成员变量（如 self.acceleration）。
+
+
+配置机制：
+IMU 有写保护。修改配置前必须先调用 unlock() 发送特定密钥。
+修改后需调用 save() 将配置写入 EEPROM，否则掉电丢失。
+
+
+
+B. 主要类 SerialImu 的关键方法
+__init__: 打开串口，初始化存储数据的 numpy 数组。
+__read_frame: 解析协议的核心。识别帧头 0x55，根据帧类型更新对应的属性（如 self.angle）。
+unlock: 写入寄存器 0x69 值为 0xB588，这是该硬件解除写保护的标准操作。
+set_output_content: 配置 IMU 每一轮发送哪些数据包（例如只发加速度和角速度，不发 GPS），通过位掩码实现。
+set_baudrate &#x2F; set_sampling_rate: 修改通信速率和数据更新频率。
+
+
+Class 常量列表Class ImuRegisters (寄存器地址)该类定义了 IMU 内部寄存器的地址映射，用于配置和读取状态。
+
+
+
+分类
+寄存器名称
+地址 (Hex)
+描述
+
+
+
+系统控制
+SAVE
+0x00
+保存配置&#x2F;重启&#x2F;恢复出厂
+
+
+
+CALSW
+0x01
+进入校准模式
+
+
+
+RSW
+0x02
+配置输出内容 (位掩码)
+
+
+
+RRATE
+0x03
+输出速率 (采样率)
+
+
+
+BAUD
+0x04
+串口波特率
+
+
+
+SLEEP
+0x22
+休眠模式
+
+
+
+ORIENT
+0x23
+安装方向设置
+
+
+
+POWONSEND
+0x2D
+上电是否自动发送
+
+
+
+KEY
+0x69
+解锁密钥 (写入 0xB588 解锁)
+
+
+零偏校准
+AXOFFSET - AZOFFSET
+0x05 - 0x07
+加速度 X&#x2F;Y&#x2F;Z 零偏
+
+
+
+GXOFFSET - GZOFFSET
+0x08 - 0x0A
+角速度 X&#x2F;Y&#x2F;Z 零偏
+
+
+
+HXOFFSET - HZOFFSET
+0x0B - 0x0D
+磁场 X&#x2F;Y&#x2F;Z 零偏
+
+
+传感器配置
+MAGRANGX - MAGRANGZ
+0x1C - 0x1E
+磁场校准范围
+
+
+
+BANDWIDTH
+0x1F
+带宽设置
+
+
+
+GYRORANGE
+0x20
+陀螺仪量程
+
+
+
+ACCRANGE
+0x21
+加速度计量程
+
+
+
+AXIS6
+0x24
+算法选择 (6轴&#x2F;9轴)
+
+
+
+FILTK
+0x25
+动态滤波系数
+
+
+
+ACCFILT
+0x2A
+加速度滤波器
+
+
+数据读取
+AX, AY, AZ
+0x34 - 0x36
+加速度原始数据
+
+
+
+GX, GY, GZ
+0x37 - 0x39
+角速度原始数据
+
+
+
+HX, HY, HZ
+0x3A - 0x3C
+磁场原始数据
+
+
+
+ROLL, PITCH, YAW
+0x3D - 0x3F
+欧拉角
+
+
+
+TEMP
+0x40
+温度
+
+
+
+Q0 - Q3
+0x51 - 0x54
+四元数
+
+
+GPS&#x2F;高度
+PRESSUREL/H
+0x45&#x2F;0x46
+气压值
+
+
+
+HEIGHTL/H
+0x47&#x2F;0x48
+高度值
+
+
+
+LONL/H, LATL/H
+0x49-0x4C
+经纬度
+
+
+
+GPSHEIGHT, GPSYAW
+0x4D, 0x4E
+GPS海拔与航向
+
+
+
+GPSVL/H
+0x4F, 0x50
+GPS地速
+
+
+I&#x2F;O 与其他
+D0MODE - D3MODE
+0x0E - 0x11
+数字引脚模式
+
+
+
+IICADDRESS
+0x1A
+I2C 地址
+
+
+
+LEDOFF
+0x1B
+关闭 LED
+
+
+
+READADDR
+0x27
+读寄存器指令
+
+
+
+VERSION
+0x2E
+固件版本
+
+
+
+Class FrameType (返回数据帧类型)IMU 发回的数据包中，标识该包属于哪种数据的标识符（位于包头的 0x55 之后）。
+
+
+
+常量名称
+值 (Hex)
+对应数据内容
+
+
+
+TIME
+0x50
+时间戳 (年&#x2F;月&#x2F;日&#x2F;时&#x2F;分&#x2F;秒&#x2F;毫秒)
+
+
+ACCELERATION
+0x51
+加速度 (X, Y, Z) &amp; 温度
+
+
+ANGULAR_VELOCITY
+0x52
+角速度 (X, Y, Z)
+
+
+ANGLE
+0x53
+欧拉角 (Roll, Pitch, Yaw)
+
+
+MAGNETIC_FIELD
+0x54
+磁场 (X, Y, Z)
+
+
+PORT_STATUS
+0x55
+端口状态 (数字IO电平)
+
+
+BAROMETER_ALTITUDE
+0x56
+气压与高度
+
+
+LATITUDE_LONGITUDE
+0x57
+GPS 经纬度
+
+
+GROUND_SPEED
+0x58
+GPS 地速
+
+
+QUATERNION
+0x59
+四元数 (Q0, Q1, Q2, Q3)
+
+
+GPS_POSITION_ACCURACY
+0x5A
+GPS 定位精度
+
+
+READY
+0x5F
+传感器就绪&#x2F;响应
+
+
+
+Class SamplingRate (采样率设置)用于写入 RRATE 寄存器，控制数据回传频率。
+
+
+
+常量名称
+值 (Hex)
+频率
+
+
+
+RATE_0_2_HZ
+0x01
+0.2 Hz
+
+
+RATE_0_5_HZ
+0x02
+0.5 Hz
+
+
+RATE_1_HZ
+0x03
+1 Hz
+
+
+RATE_2_HZ
+0x04
+2 Hz
+
+
+RATE_5_HZ
+0x05
+5 Hz
+
+
+RATE_10_HZ
+0x06
+10 Hz
+
+
+RATE_20_HZ
+0x07
+20 Hz
+
+
+RATE_50_HZ
+0x08
+50 Hz
+
+
+RATE_100_HZ
+0x09
+100 Hz
+
+
+RATE_200_HZ
+0x0B
+200 Hz
+
+
+RATE_SINGLE
+0x0C
+单次请求
+
+
+RATE_NO_RETURN
+0x0D
+不自动回传
+
+
+
+Class Baudrate (波特率设置)用于写入 BAUD 寄存器以及初始化 serial.Serial。
+
+
+
+常量名称
+值 (Hex)
+实际波特率 (bps)
+
+
+
+BAUD_4800
+0x01
+4800
+
+
+BAUD_9600
+0x02
+9600
+
+
+BAUD_19200
+0x03
+19200
+
+
+BAUD_38400
+0x04
+38400
+
+
+BAUD_57600
+0x05
+57600
+
+
+BAUD_115200
+0x06
+115200 (默认常见)
+
+
+BAUD_230400
+0x07
+230400
+
+
+BAUD_460800
+0x08
+460800
+
+
+使用示例在代码底部的 if __name__ == &quot;__main__&quot;: 块展示了标准用法：
+
+初始化：imu = SerialImu(baudrate=Baudrate.BAUD_460800)
+配置（可选）：
+先 unlock()。
+设置参数（如 set_output_content 开启四元数输出）。
+save() 保存配置。
+
+
+运行：
+imu.run_forever()：启动后台线程读取数据。
+主循环中使用 imu.acceleration, imu.quaternion 等属性获取最新的传感器数据。
+
+
+
+]]></content>
       <categories>
         <category>Berkeley Humanoid Lite</category>
       </categories>
@@ -679,6 +1129,187 @@ num_actions: 12action_scale: 0.25action_indices:- 0- 1- 2- 3- 4- 5- 6- 7- 8- 9- 
       </tags>
   </entry>
   <entry>
+    <title>Berkeley Humanoid Lite 的 environments/mujoco.py</title>
+    <url>/2026/02/10/The-mujoco-py-of-Berkeley-Humanoid-Lite/</url>
+    <content><![CDATA[辅助函数quat_rotate_inverse(q, v)
+功能：计算向量 $v$ 经过四元数 $q$ 的逆旋转后的结果。
+数学含义：通常用于将 世界坐标系 下的向量（如重力向量 $[0, 0, -1]$）转换到 机器人基座（Base）坐标系 下。这是人形机器人 RL 中常用的观测特征，用于让机器人感知“哪边是下”。
+
+类详解class MujocoEnv (基类)这是仿真环境的基础封装。
+
+模型加载：根据 cfg.num_joints 自动判断加载哪种 XML 模型文件：
+22关节：全尺寸人形 (bhl_scene.xml)。
+其他：双足版本 (bhl_biped_scene.xml)。
+
+
+初始化：
+mj_model: 静态模型定义。
+mj_data: 动态仿真数据（位置、速度、力等）。
+mj_viewer: 启动被动的 3D 查看器。
+
+
+
+class MujocoVisualizer (可视化器)用途：用于“回放”或“监视”。它不进行物理控制，而是强制修改机器人的状态。
+
+reset: 将机器人重置到原点，姿态归零。
+step(robot_observations):
+输入：robot_observations（全状态观测向量）。
+逻辑：它直接覆盖 mj_data.qpos (位置) 和 mj_data.qvel (速度)。
+意义：这实现了“运动学回放”。即使物理上不合理（例如穿模），它也会强制显示输入的状态。通常用于将真实机器人的 log 数据在仿真器中显示出来。
+
+
+
+class MujocoSimulator (物理仿真器)用途：用于 Sim-to-Real 训练或推理。它模拟真实的物理动力学。
+关键属性：
+
+physics_substeps：物理子步数。
+RL 策略频率通常较低（如 50Hz，即 policy_dt&#x3D;0.02s）。
+物理引擎频率较高（如 1000Hz，即 physics_dt&#x3D;0.001s）。
+substeps = 20 表示策略每输出一次动作，物理引擎计算 20 次。
+
+
+joint_kp &#x2F; joint_kd：PD 控制器的比例（刚度）和微分（阻尼）增益。
+effort_limits：关节力矩限制（模拟电机的最大输出）。
+Se2Gamepad：启动一个手柄监听线程，用于在仿真中通过手柄控制机器人的移动指令（x速度, y速度, 偏航角速度）。
+
+关键方法：
+
+reset():
+
+将机器人设为 default_base_position 和 default_joint_positions。
+返回初始观测值。
+
+
+step(actions) (核心循环):
+
+子步循环：运行 physics_substeps 次。
+_apply_actions(actions):
+PD 控制律：$$ \tau &#x3D; K_p (q_{target} - q_{current}) + K_d (0 - \dot{q}_{current}) $$注意：这里目标速度设为了0，是标准的位置控制模式。
+限幅：将计算出的力矩 $\tau$ 限制在 effort_limits 范围内。
+执行：写入 mj_data.ctrl。
+
+
+物理步进：mujoco.mj_step。
+实时同步：计算物理计算消耗的时间，如果有剩余时间，通过 time.sleep 等待，以保持仿真画面与现实时间同步（Real-time factor &#x3D; 1）。
+返回观测：调用 _get_observations。
+
+
+_get_observations() (构建状态空间):
+
+组合机器人状态和用户指令，返回一个 PyTorch Tensor。
+观测向量结构 (Concatenated):
+Base Quat (4维): 基座姿态四元数。
+Base Ang Vel (3维): 基座角速度。
+Joint Pos (N维): 关节角度。
+Joint Vel (N维): 关节角速度。
+Commands (4维): [模式, X速度, Y速度, Yaw速度]。
+
+
+
+
+
+
+代码中的常量与配置映射表虽然代码中主要引用了外部 cfg，但根据 MujocoSimulator 的逻辑，可以整理出以下关键参数与数据的关系：
+
+
+
+参数&#x2F;变量
+数据来源
+描述
+
+
+
+Physics Timestep
+cfg.physics_dt
+底层物理引擎的积分步长 (通常 0.001s 或 0.002s)
+
+
+Policy Timestep
+cfg.policy_dt
+RL 策略的控制周期 (通常 0.02s)
+
+
+Substeps
+policy_dt / physics_dt
+每次 step() 调用对应的物理步数
+
+
+Gravity
+[0, 0, -1]
+重力向量（世界坐标系），用于计算投影重力
+
+
+Joint KP
+cfg.joint_kp
+关节位置增益 (Stiffness)
+
+
+Joint KD
+cfg.joint_kd
+关节速度增益 (Damping)
+
+
+Torque Limits
+cfg.effort_limits
+关节最大输出力矩 (N·m)
+
+
+Sensordata Layout
+mj_data.sensordata
+MuJoCo XML 中定义的传感器数据缓冲区
+
+
+Observation (观测) 数据结构表:
+
+
+
+组成部分
+维度
+来源
+说明
+
+
+
+Base Quat
+4
+sensordata
+IMU 测量的姿态 (w, x, y, z)
+
+
+Base Ang Vel
+3
+sensordata
+IMU 测量的角速度 (wx, wy, wz)
+
+
+Joint Pos
+N
+sensordata
+编码器读取的关节角度
+
+
+Joint Vel
+N
+sensordata
+编码器读取的关节角速度
+
+
+Command
+4
+Se2Gamepad
+[Mode, Vel_X, Vel_Y, Vel_Yaw]
+
+
+]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Berkeley Humanoid Lite Lowlevel 的 recoil/can.py</title>
     <url>/2026/02/10/The-recoil-can-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
     <content><![CDATA[DataFrame 的定义一个通用的数据帧结构，用于存储通信协议中的基本信息，并强制执行数据长度的一致性检查。
@@ -721,10 +1352,55 @@ assert self.size &lt;= 8 确保 CAN 帧的数据长度不超过 8 字节，这�
       </tags>
   </entry>
   <entry>
+    <title>在 Isaac Sim 里面训练 Berkeley Humanoid Lite</title>
+    <url>/2026/02/10/Train-the-Berkeley-Humanoid-Lite/</url>
+    <content><![CDATA[前期提要在Berkeley Humanoid Lite的getting-started-with-software&#x2F;training-environment中，给出了安装 Training Environment 的办法。
+getting-started-with-software部分主要讲述了一件事：通过不断的“试错”，把一个只会原地瘫倒的机器人 3D 模型，训练成一个能跑、能跳、能平衡的“智能体”。
+这里就不说了，我写一些我遇到的问题的解决方法
+Carb 库丢失遇到的错误 No module named &#39;carb._carb&#39; 和 TypeError: &#39;NoneType&#39; object is not callable
+(berkeley-humanoid-lite) mryan2005@venti:~/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite$ python ./scripts/rsl_rl/play.py --task Velocity-Berkeley-Humanoid-Lite-v0 --num_envs 16[Warning] Unable to expose &#x27;isaacsim.simulation_app&#x27; API: No module named &#x27;carb._carb&#x27;[INFO][AppLauncher]: Using device: cuda:0[INFO][AppLauncher]: Loading experience file: /home/mryan2005/IsaacLab/apps/isaacsim_4_5/isaaclab.python.kitTraceback (most recent call last):File &quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite/./scripts/rsl_rl/play.py&quot;, line 31, in &lt;module&gt;app_launcher = AppLauncher(args_cli)File &quot;/home/mryan2005/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py&quot;, line 131, in initself._create_app()File &quot;/home/mryan2005/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py&quot;, line 823, in _create_appself._app = SimulationApp(self._sim_app_config, experience=self._sim_experience_file)TypeError: &#x27;NoneType&#x27; object is not callable
+
+核心原因Python 环境没有正确加载 Isaac Sim 的底层库。
+修复环境链接我的 Isaac Sim 5.1 的安装路径是在 /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64
+重新配置 Isaac Lab 链接在 IsaacLab 根目录下执行
+cd ~/IsaacLab# 将路径替换为你实际的 Isaac Sim 5.1 路径ln -sfn /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64 _isaac_sim
+
+flatdict 无法安装# 1. 下载 flatdict 源码包wget https://pypi.tuna.tsinghua.edu.cn/packages/3e/0d/424de6e5612f1399ff69bf86500d6a62ff0a4843979701ae97f120c7f1fe/flatdict-4.0.1.tar.gz# 2. 解压tar -xvf flatdict-4.0.1.tar.gzcd flatdict-4.0.1# 3. [核心] 使用对应的 Python 解释器直接运行安装脚本# 如果是装给 Isaac Sim 内部：/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64/python.sh setup.py install# 如果是装给 Conda 环境：# python setup.py install# 4. 检查是否成功cd ..rm -rf flatdict-4.0.1*
+
+numpy、tensorboard 不存在# 1. 确保已彻底退出 Conda (直到命令提示符前没有 (base) 等字样)conda deactivate# 2. 定义 Isaac Sim 路径export ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;# 4. 使用禁用隔离模式安装 flatdict 到内部环境$ISAACSIM_PATH/python.sh -m pip install numpy tensorboard --no-build-isolation# 5. 验证$ISAACSIM_PATH/python.sh -c &quot;import numpy; print(&#x27;Isaac Sim 内部 numpy 安装成功&#x27;)&quot;
+
+路径污染编写 run_play.sh#!/bin/bashexport ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;export ISAAC_LAB_PATH=&quot;/home/mryan2005/IsaacLab&quot;export PROJECT_ROOT=&quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite&quot;unset PYTHONPATHunset CONDA_PREFIXunset PYTHONHOME# 1. 删除 Omniverse 通用缓存 (包含旧版扩展记录)rm -rf ~/.cache/ovrm -rf ~/.cache/nvidia/GLCache# 2. 删除着色器缓存 (强制 5.1 重新生成)rm -rf ~/.nvidia-shader-cache# 3. 删除 Isaac Sim 5.1 的运行缓存（需要修改路径！！！！）rm -rf ~/isaac-sim-standalone-5.1.0-linux-x86_64/kit/data/Kit/Isaac-Sim/5.1/cacheexport PYTHONPATH=$PROJECT_ROOT/source/berkeley_humanoid_liteexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_assetsexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/isaaclabexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_rlexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_tasksexport ISAACLAB_EXP_FILE=&quot;$ISAACSIM_PATH/apps/isaacsim.python.kit&quot;cd $PROJECT_ROOT$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/playNew.py \    --task Velocity-Berkeley-Humanoid-Lite-v0 \    --num_envs 1 \    --load_run 2026-02-10_15-54-39
+
+编写 run_train.sh#!/bin/bashexport ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;export ISAAC_LAB_PATH=&quot;/home/mryan2005/IsaacLab&quot;export PROJECT_ROOT=&quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite&quot;export PYTHONPATH=&quot;&quot;export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_liteexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_assetsexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_lowlevelexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/isaaclabexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_rlexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_tasksexport ISAACLAB_EXP_FILE=&quot;$ISAAC_LAB_PATH/apps/isaaclab.python.kit&quot;# 1. 删除 Omniverse 通用缓存 (包含旧版扩展记录)rm -rf ~/.cache/ovrm -rf ~/.cache/nvidia/GLCache# 2. 删除着色器缓存 (强制 5.1 重新生成)rm -rf ~/.nvidia-shader-cache# 3. 删除 Isaac Sim 5.1 的运行缓存（需要修改路径！！！！）rm -rf ~/isaac-sim-standalone-5.1.0-linux-x86_64/kit/data/Kit/Isaac-Sim/5.1/cachecd $PROJECT_ROOT$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/train.py \    --task Velocity-Berkeley-Humanoid-Lite-v0 \    --num_envs 1024 \    &quot;$@&quot;      # 确保后面有 &quot;$@&quot;，这样在外面输入的 --resume 才能传给 python
+
+版本残留Isaac Lab 在安装时会扫描 _isaac_sim 链接并生成固定的路径映射。
+运行下面的重置 Isaac Lab 的版本映射的命令即可
+# 1. 进入 IsaacLab 目录cd ~/IsaacLab# 2. 强制更正软链接 (确保指向 5.1)ln -sfn /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64 _isaac_sim# 3. 彻底删除旧版配置残留 (如果 5.1 的配置文件夹没生成，就从 4.5 复制一份)if [ ! -d &quot;apps/isaacsim_5_1&quot; ]; then    cp -r apps/isaacsim_4_5 apps/isaacsim_5_1fi# 4. [关键] 强制重新安装 Isaac Lab 核心# 使用 --force-reinstall 确保 egg-info 里的路径元数据被重写conda activate berkeley-humanoid-litepip install -e source/isaaclab --force-reinstall --no-build-isolation
+
+RSL-RL 算法库的结构性矛盾不使用 Isaac Lab 自动安装的 RSL-RL 4.0就可以了
+在 Isaac Sim 内部环境中强制降级，以匹配机器人的 PPO 配置。
+# 确保已 conda deactivate，在终端 A 执行export ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;# 1. 卸载新版$ISAACSIM_PATH/python.sh -m pip uninstall -y rsl-rl-lib# 2. 安装完全匹配的旧版$ISAACSIM_PATH/python.sh -m pip install git+https://github.com/leggedrobotics/rsl_rl.git@v1.0.2
+
+Isaac Lab 0.54+ API 的剧烈变动修改 .&#x2F;scripts&#x2F;rsl_rl&#x2F;playNew.py 的代码我们可以按照 train.py 来写一个 playNew.py 的代码，从而可以看到训练结果
+&quot;&quot;&quot;使用 RSL-RL v1.0.2 推理/预览 Berkeley Humanoid Lite 的脚本。结构严格仿照 train.py，适配 Isaac Sim 5.1。&quot;&quot;&quot;import argparseimport osimport sysimport torch# --- [1] 初始化 AppLauncher (必须最先导入) ---from isaaclab.app import AppLauncher# 解决本地导入sys.path.append(os.path.dirname(os.path.abspath(__file__)))import cli_args  # isort: skipparser = argparse.ArgumentParser(description=&quot;Play/Inference with RSL-RL agent.&quot;)parser.add_argument(&quot;--num_envs&quot;, type=int, default=1, help=&quot;仿真环境数量(预览通常为1)&quot;)parser.add_argument(&quot;--task&quot;, type=str, default=None, help=&quot;任务名称&quot;)parser.add_argument(&quot;--seed&quot;, type=int, default=None, help=&quot;随机种子&quot;)# 添加 RSL-RL 参数cli_args.add_rsl_rl_args(parser)AppLauncher.add_app_launcher_args(parser)args_cli, hydra_args = parser.parse_known_args()# 强制开启图形界面args_cli.headless = Falsesys.argv = [sys.argv[0]] + hydra_argsapp_launcher = AppLauncher(args_cli)simulation_app = app_launcher.app# --- [2] 仿真启动后的导入 ---import gymnasium as gymfrom omegaconf import OmegaConffrom rsl_rl.runners import OnPolicyRunnerfrom rsl_rl.algorithms import PPOfrom rsl_rl.modules import ActorCriticfrom isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agentfrom isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapperfrom isaaclab_tasks.utils import get_checkpoint_pathfrom isaaclab_tasks.utils.hydra import hydra_task_configfrom isaaclab.utils.dict import class_to_dictimport berkeley_humanoid_lite.tasks  # noqa: F401# --- [兼容层] 复用 Wrapper ---class RslRlVecEnvWrapperFixed(RslRlVecEnvWrapper):    def __init__(self, env):        self.env = env        base_env = env.unwrapped        self.unwrapped_env = base_env         self.device = base_env.device                obs_manager = base_env.observation_manager                def _to_int(val):            if isinstance(val, (tuple, list)): return int(val[0])            return int(val)        self.num_obs = _to_int(obs_manager.group_obs_dim[&quot;policy&quot;])        self.num_actions = _to_int(base_env.action_manager.total_action_dim)        self.num_envs = base_env.num_envs        if &quot;critic&quot; in obs_manager.group_obs_dim:            self.num_privileged_obs = _to_int(obs_manager.group_obs_dim[&quot;critic&quot;])        else:            self.num_privileged_obs = None                    self.episode_length_buf = base_env.episode_length_buf    def _strip_tensordict(self, obs):        if obs is None: return None        if not isinstance(obs, torch.Tensor):            if isinstance(obs, dict):                return torch.cat(list(obs.values()), dim=-1)        return obs.view(obs.shape)    def get_observations(self):        obs = self.unwrapped.observation_manager.compute_group(&quot;policy&quot;)        return self._strip_tensordict(obs)    def get_privileged_observations(self):        if self.num_privileged_obs is not None:            obs = self.unwrapped.observation_manager.compute_group(&quot;critic&quot;)            return self._strip_tensordict(obs)        return None    def step(self, actions):        obs_dict, rew, terminated, truncated, extras = self.env.step(actions)        obs = self._strip_tensordict(obs_dict[&quot;policy&quot;])        privileged_obs = None        if &quot;critic&quot; in obs_dict:            privileged_obs = self._strip_tensordict(obs_dict[&quot;critic&quot;])        elif self.num_privileged_obs is not None:            privileged_obs = self.get_privileged_observations()        dones = terminated | truncated        return obs, privileged_obs, rew, dones, extras        def reset(self):        obs_dict, _ = self.env.reset()        obs = self._strip_tensordict(obs_dict[&quot;policy&quot;])        return obs, self.get_privileged_observations()# --- [参数过滤器] ---def filter_dict(raw_dict, whitelist):    return &#123;k: v for k, v in raw_dict.items() if k in whitelist&#125;PPO_WHITELIST = [&#x27;value_loss_coef&#x27;, &#x27;use_clipped_value_loss&#x27;, &#x27;clip_param&#x27;, &#x27;entropy_coef&#x27;,                  &#x27;num_learning_epochs&#x27;, &#x27;num_mini_batches&#x27;, &#x27;learning_rate&#x27;, &#x27;schedule&#x27;,                  &#x27;gamma&#x27;, &#x27;lam&#x27;, &#x27;desired_kl&#x27;, &#x27;max_grad_norm&#x27;]POLICY_WHITELIST = [&#x27;init_noise_std&#x27;, &#x27;actor_hidden_dims&#x27;, &#x27;critic_hidden_dims&#x27;, &#x27;activation&#x27;]# -------------------------------------------------------@hydra_task_config(args_cli.task, &quot;rsl_rl_cfg_entry_point&quot;)def main(env_cfg, agent_cfg: RslRlOnPolicyRunnerCfg):    # 1. 同步参数    agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)    env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else 1    # === 地形与高度修正 ===    if hasattr(env_cfg.scene, &quot;terrain&quot;):        print(&quot;[INFO] Play模式: 强制地形为无限平面 (Plane)&quot;)        env_cfg.scene.terrain.terrain_type = &quot;plane&quot;        env_cfg.scene.terrain.terrain_generator = None         if hasattr(env_cfg.scene, &quot;robot&quot;):        env_cfg.scene.robot.init_state.pos = (0.0, 0.0, 0)        print(&quot;[INFO] Play模式: 强制初始高度为 1.05m&quot;)    # 2. 设置日志根目录    log_root_path = os.path.join(&quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name)    log_root_path = os.path.abspath(log_root_path)        # 3. 寻找 Checkpoint    load_run = agent_cfg.load_run    if load_run == &quot;-1&quot;:        load_run = None        resume_path = None    try:        resume_path = get_checkpoint_path(log_root_path, load_run, agent_cfg.load_checkpoint)        print(f&quot;[INFO] 加载模型路径: &#123;resume_path&#125;&quot;)    except Exception as e:        print(f&quot;[ERROR] 无法找到模型 checkpoint: &#123;e&#125;&quot;)        simulation_app.close()        sys.exit(1)    # 4. 创建环境    print(f&quot;[INFO] 正在创建环境: &#123;args_cli.task&#125;&quot;)    env = gym.make(args_cli.task, cfg=env_cfg)    if isinstance(env.unwrapped, DirectMARLEnv):        env = multi_agent_to_single_agent(env)        env = RslRlVecEnvWrapperFixed(env)    # 5. 构造 Runner 配置    raw_dict = class_to_dict(agent_cfg) if not isinstance(agent_cfg, dict) else agent_cfg        # === [关键修复] 补全 runner 所需的所有键值 ===    rsl_cfg = &#123;        &quot;runner&quot;: &#123;            &quot;policy_class_name&quot;: &quot;ActorCritic&quot;,            &quot;algorithm_class_name&quot;: &quot;PPO&quot;,            &quot;experiment_name&quot;: agent_cfg.experiment_name,            &quot;checkpoint&quot;: resume_path,                        # --- 以下是本次修复补充的必要参数 ---            &quot;num_steps_per_env&quot;: agent_cfg.num_steps_per_env,  # 解决 KeyError            &quot;max_iterations&quot;: agent_cfg.max_iterations,        # 初始化需要            &quot;save_interval&quot;: agent_cfg.save_interval,          # 初始化需要            &quot;run_name&quot;: agent_cfg.run_name,        &#125;,        &quot;algorithm&quot;: filter_dict(raw_dict.get(&quot;algorithm&quot;, &#123;&#125;), PPO_WHITELIST),        &quot;policy&quot;: filter_dict(raw_dict.get(&quot;policy&quot;, &#123;&#125;), POLICY_WHITELIST),    &#125;    # 6. 初始化 Runner    # log_dir=None 表示不创建新的日志文件夹    runner = OnPolicyRunner(env, rsl_cfg, log_dir=None, device=agent_cfg.device)    runner.load(resume_path)        policy = runner.get_inference_policy(device=env.device)    # 7. 推理循环    print(&quot;-&quot; * 80)    print(&quot;[INFO] 启动成功！在 Isaac Sim 中按 &#x27;F&#x27; 键跟随机器人。&quot;)    print(&quot;-&quot; * 80)    obs, _ = env.reset()    while simulation_app.is_running():        with torch.inference_mode():            actions = policy(obs)            obs, _, _, _, _ = env.step(actions)    env.close()if __name__ == &quot;__main__&quot;:    main()    simulation_app.close()
+
+修改 .&#x2F;scripts&#x2F;rsl_rl&#x2F;train.py 的代码# scripts/rsl_rl/train.pyimport argparseimport osimport sys# --- [关键] 1. 初始化 AppLauncher (必须最先导入) ---from isaaclab.app import AppLauncher# 将当前目录加入路径以便导入 cli_args.pysys.path.append(os.path.dirname(os.path.abspath(__file__)))import cli_args# 解析参数parser = argparse.ArgumentParser(description=&quot;Train an RL agent with RSL-RL.&quot;)parser.add_argument(&quot;--video&quot;, action=&quot;store_true&quot;, default=False, help=&quot;是否在训练中录制视频&quot;)parser.add_argument(&quot;--video_length&quot;, type=int, default=200, help=&quot;录制视频步数&quot;)parser.add_argument(&quot;--disable_fabric&quot;, action=&quot;store_true&quot;, default=False, help=&quot;禁用 Fabric&quot;)parser.add_argument(&quot;--num_envs&quot;, type=int, default=None, help=&quot;仿真环境数量&quot;)parser.add_argument(&quot;--task&quot;, type=str, default=None, help=&quot;任务名称&quot;)parser.add_argument(&quot;--seed&quot;, type=int, default=None, help=&quot;随机种子&quot;)# 添加 RSL-RL 和 AppLauncher 的参数cli_args.add_rsl_rl_args(parser)AppLauncher.add_app_launcher_args(parser)args_cli, _ = parser.parse_known_args()# 启动仿真 Appapp_launcher = AppLauncher(args_cli)simulation_app = app_launcher.app# --- [关键] 2. 仿真启动后的导入 ---import gymnasium as gymimport datetimeimport pickleimport torchfrom omegaconf import OmegaConffrom rsl_rl.runners import OnPolicyRunnerimport isaaclab.utils.dict as dict_utilsfrom isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agentfrom isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapperfrom isaaclab_tasks.utils import parse_env_cfg# 导入自定义任务包以注册环境import berkeley_humanoid_lite.tasks  # noqa: F401def main():    &quot;&quot;&quot;训练主函数&quot;&quot;&quot;        # 1. 解析环境配置    env_cfg = parse_env_cfg(        args_cli.task,         device=args_cli.device,         num_envs=args_cli.num_envs if args_cli.num_envs is not None else 4096,         use_fabric=not args_cli.disable_fabric    )    if args_cli.seed is not None:        env_cfg.seed = args_cli.seed    # 2. 解析 RSL-RL Agent 配置    agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)    # 3. 设置日志目录    log_dir = os.path.join(        &quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name,         datetime.datetime.now().strftime(&quot;%Y-%m-%d_%H-%M-%S&quot;)    )    os.makedirs(log_dir, exist_ok=True)    # 4. 创建环境    render_mode = &quot;rgb_array&quot; if args_cli.video else None    env = gym.make(args_cli.task, cfg=env_cfg, render_mode=render_mode)    # 5. 录制视频包装    if args_cli.video:        video_kwargs = &#123;            &quot;video_folder&quot;: os.path.join(log_dir, &quot;videos&quot;, &quot;train&quot;),            &quot;step_trigger&quot;: lambda step: step % 1000 == 0, # 每 1000 步录一段            &quot;video_length&quot;: args_cli.video_length,            &quot;disable_logger&quot;: True,        &#125;        env = gym.wrappers.RecordVideo(env, **video_kwargs)    # 6. 环境包装    if isinstance(env.unwrapped, DirectMARLEnv):        env = multi_agent_to_single_agent(env)    env = RslRlVecEnvWrapper(env)    # 7. 保存配置 (修复之前报错的关键点)    # 使用 OmegaConf 和 Pickle 替代已删除的 dump_yaml/dump_pickle    config_dir = os.path.join(log_dir, &quot;configs&quot;)    os.makedirs(config_dir, exist_ok=True)        # 导出 Agent 配置    with open(os.path.join(config_dir, &quot;agent.yaml&quot;), &quot;w&quot;) as f:        f.write(OmegaConf.to_yaml(agent_cfg))        # 导出环境配置 (Pickle 备份)    with open(os.path.join(config_dir, &quot;env_cfg.pkl&quot;), &quot;wb&quot;) as f:        pickle.dump(env_cfg, f)    # 8. 初始化并运行训练    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)        # 如果指定了 resume，则加载旧模型    if agent_cfg.resume:        from isaaclab_tasks.utils import get_checkpoint_path        resume_path = get_checkpoint_path(            os.path.join(&quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name),             agent_cfg.load_run,             agent_cfg.load_checkpoint        )        print(f&quot;[INFO] Resuming from checkpoint: &#123;resume_path&#125;&quot;)        runner.load(resume_path)    print(f&quot;[INFO] 训练正式开始...&quot;)    runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)    # 9. 资源清理    env.close()if __name__ == &quot;__main__&quot;:    main()    simulation_app.close()
+
+硬件与底层渲染障碍其实，这个部分要解决也很简单的，就是就该参数num_envs就可以了，一般情况下，按照这样的阶梯设置512、1024、2048、4096来设置。
+]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Berkeley Humanoid Lite Lowlevel 的 recoil/core.py</title>
     <url>/2026/02/10/The-recoil-core-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
     <content><![CDATA[根据您提供的代码，我将其中的常量类整理为表格，并对 Bus 类的核心方法进行了分类列表和说明。
-1. 常量类列表Class Function (CAN功能码)该类定义了CAN ID的高4位，用于区分消息类型。
+常量类列表Class Function (CAN功能码)该类定义了CAN ID的高4位，用于区分消息类型。
 
 
 
@@ -1027,7 +1703,7 @@ I2C缓冲&#x2F;计数、CPR(分辨率)、位置偏移、速度滤波、位置&#x
 
 
 
-2. Class Bus 方法列表Bus 类负责底层的 CAN 通信以及协议的封装。
+Class Bus 方法列表Bus 类负责底层的 CAN 通信以及协议的封装。
 基础通信与管理
 
 
@@ -1187,51 +1863,6 @@ read_motor_pole_pairs &#x2F; write_motor_pole_pairs (读写极对数)
       </tags>
   </entry>
   <entry>
-    <title>在 Isaac Sim 里面训练 Berkeley Humanoid Lite</title>
-    <url>/2026/02/10/Train-the-Berkeley-Humanoid-Lite/</url>
-    <content><![CDATA[前期提要在Berkeley Humanoid Lite的getting-started-with-software&#x2F;training-environment中，给出了安装 Training Environment 的办法。
-getting-started-with-software部分主要讲述了一件事：通过不断的“试错”，把一个只会原地瘫倒的机器人 3D 模型，训练成一个能跑、能跳、能平衡的“智能体”。
-这里就不说了，我写一些我遇到的问题的解决方法
-Carb 库丢失遇到的错误 No module named &#39;carb._carb&#39; 和 TypeError: &#39;NoneType&#39; object is not callable
-(berkeley-humanoid-lite) mryan2005@venti:~/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite$ python ./scripts/rsl_rl/play.py --task Velocity-Berkeley-Humanoid-Lite-v0 --num_envs 16[Warning] Unable to expose &#x27;isaacsim.simulation_app&#x27; API: No module named &#x27;carb._carb&#x27;[INFO][AppLauncher]: Using device: cuda:0[INFO][AppLauncher]: Loading experience file: /home/mryan2005/IsaacLab/apps/isaacsim_4_5/isaaclab.python.kitTraceback (most recent call last):File &quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite/./scripts/rsl_rl/play.py&quot;, line 31, in &lt;module&gt;app_launcher = AppLauncher(args_cli)File &quot;/home/mryan2005/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py&quot;, line 131, in initself._create_app()File &quot;/home/mryan2005/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py&quot;, line 823, in _create_appself._app = SimulationApp(self._sim_app_config, experience=self._sim_experience_file)TypeError: &#x27;NoneType&#x27; object is not callable
-
-核心原因Python 环境没有正确加载 Isaac Sim 的底层库。
-修复环境链接我的 Isaac Sim 5.1 的安装路径是在 /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64
-重新配置 Isaac Lab 链接在 IsaacLab 根目录下执行
-cd ~/IsaacLab# 将路径替换为你实际的 Isaac Sim 5.1 路径ln -sfn /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64 _isaac_sim
-
-flatdict 无法安装# 1. 下载 flatdict 源码包wget https://pypi.tuna.tsinghua.edu.cn/packages/3e/0d/424de6e5612f1399ff69bf86500d6a62ff0a4843979701ae97f120c7f1fe/flatdict-4.0.1.tar.gz# 2. 解压tar -xvf flatdict-4.0.1.tar.gzcd flatdict-4.0.1# 3. [核心] 使用对应的 Python 解释器直接运行安装脚本# 如果是装给 Isaac Sim 内部：/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64/python.sh setup.py install# 如果是装给 Conda 环境：# python setup.py install# 4. 检查是否成功cd ..rm -rf flatdict-4.0.1*
-
-numpy、tensorboard 不存在# 1. 确保已彻底退出 Conda (直到命令提示符前没有 (base) 等字样)conda deactivate# 2. 定义 Isaac Sim 路径export ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;# 4. 使用禁用隔离模式安装 flatdict 到内部环境$ISAACSIM_PATH/python.sh -m pip install numpy tensorboard --no-build-isolation# 5. 验证$ISAACSIM_PATH/python.sh -c &quot;import numpy; print(&#x27;Isaac Sim 内部 numpy 安装成功&#x27;)&quot;
-
-路径污染编写 run_play.sh#!/bin/bashexport ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;export ISAAC_LAB_PATH=&quot;/home/mryan2005/IsaacLab&quot;export PROJECT_ROOT=&quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite&quot;unset PYTHONPATHunset CONDA_PREFIXunset PYTHONHOME# 1. 删除 Omniverse 通用缓存 (包含旧版扩展记录)rm -rf ~/.cache/ovrm -rf ~/.cache/nvidia/GLCache# 2. 删除着色器缓存 (强制 5.1 重新生成)rm -rf ~/.nvidia-shader-cache# 3. 删除 Isaac Sim 5.1 的运行缓存（需要修改路径！！！！）rm -rf ~/isaac-sim-standalone-5.1.0-linux-x86_64/kit/data/Kit/Isaac-Sim/5.1/cacheexport PYTHONPATH=$PROJECT_ROOT/source/berkeley_humanoid_liteexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_assetsexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/isaaclabexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_rlexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_tasksexport ISAACLAB_EXP_FILE=&quot;$ISAACSIM_PATH/apps/isaacsim.python.kit&quot;cd $PROJECT_ROOT$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/playNew.py \    --task Velocity-Berkeley-Humanoid-Lite-v0 \    --num_envs 1 \    --load_run 2026-02-10_15-54-39
-
-编写 run_train.sh#!/bin/bashexport ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;export ISAAC_LAB_PATH=&quot;/home/mryan2005/IsaacLab&quot;export PROJECT_ROOT=&quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite&quot;export PYTHONPATH=&quot;&quot;export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_liteexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_assetsexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_lowlevelexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/isaaclabexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_rlexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_tasksexport ISAACLAB_EXP_FILE=&quot;$ISAAC_LAB_PATH/apps/isaaclab.python.kit&quot;# 1. 删除 Omniverse 通用缓存 (包含旧版扩展记录)rm -rf ~/.cache/ovrm -rf ~/.cache/nvidia/GLCache# 2. 删除着色器缓存 (强制 5.1 重新生成)rm -rf ~/.nvidia-shader-cache# 3. 删除 Isaac Sim 5.1 的运行缓存（需要修改路径！！！！）rm -rf ~/isaac-sim-standalone-5.1.0-linux-x86_64/kit/data/Kit/Isaac-Sim/5.1/cachecd $PROJECT_ROOT$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/train.py \    --task Velocity-Berkeley-Humanoid-Lite-v0 \    --num_envs 1024 \    &quot;$@&quot;      # 确保后面有 &quot;$@&quot;，这样在外面输入的 --resume 才能传给 python
-
-版本残留Isaac Lab 在安装时会扫描 _isaac_sim 链接并生成固定的路径映射。
-运行下面的重置 Isaac Lab 的版本映射的命令即可
-# 1. 进入 IsaacLab 目录cd ~/IsaacLab# 2. 强制更正软链接 (确保指向 5.1)ln -sfn /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64 _isaac_sim# 3. 彻底删除旧版配置残留 (如果 5.1 的配置文件夹没生成，就从 4.5 复制一份)if [ ! -d &quot;apps/isaacsim_5_1&quot; ]; then    cp -r apps/isaacsim_4_5 apps/isaacsim_5_1fi# 4. [关键] 强制重新安装 Isaac Lab 核心# 使用 --force-reinstall 确保 egg-info 里的路径元数据被重写conda activate berkeley-humanoid-litepip install -e source/isaaclab --force-reinstall --no-build-isolation
-
-RSL-RL 算法库的结构性矛盾不使用 Isaac Lab 自动安装的 RSL-RL 4.0就可以了
-在 Isaac Sim 内部环境中强制降级，以匹配机器人的 PPO 配置。
-# 确保已 conda deactivate，在终端 A 执行export ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;# 1. 卸载新版$ISAACSIM_PATH/python.sh -m pip uninstall -y rsl-rl-lib# 2. 安装完全匹配的旧版$ISAACSIM_PATH/python.sh -m pip install git+https://github.com/leggedrobotics/rsl_rl.git@v1.0.2
-
-Isaac Lab 0.54+ API 的剧烈变动修改 .&#x2F;scripts&#x2F;rsl_rl&#x2F;playNew.py 的代码我们可以按照 train.py 来写一个 playNew.py 的代码，从而可以看到训练结果
-&quot;&quot;&quot;使用 RSL-RL v1.0.2 推理/预览 Berkeley Humanoid Lite 的脚本。结构严格仿照 train.py，适配 Isaac Sim 5.1。&quot;&quot;&quot;import argparseimport osimport sysimport torch# --- [1] 初始化 AppLauncher (必须最先导入) ---from isaaclab.app import AppLauncher# 解决本地导入sys.path.append(os.path.dirname(os.path.abspath(__file__)))import cli_args  # isort: skipparser = argparse.ArgumentParser(description=&quot;Play/Inference with RSL-RL agent.&quot;)parser.add_argument(&quot;--num_envs&quot;, type=int, default=1, help=&quot;仿真环境数量(预览通常为1)&quot;)parser.add_argument(&quot;--task&quot;, type=str, default=None, help=&quot;任务名称&quot;)parser.add_argument(&quot;--seed&quot;, type=int, default=None, help=&quot;随机种子&quot;)# 添加 RSL-RL 参数cli_args.add_rsl_rl_args(parser)AppLauncher.add_app_launcher_args(parser)args_cli, hydra_args = parser.parse_known_args()# 强制开启图形界面args_cli.headless = Falsesys.argv = [sys.argv[0]] + hydra_argsapp_launcher = AppLauncher(args_cli)simulation_app = app_launcher.app# --- [2] 仿真启动后的导入 ---import gymnasium as gymfrom omegaconf import OmegaConffrom rsl_rl.runners import OnPolicyRunnerfrom rsl_rl.algorithms import PPOfrom rsl_rl.modules import ActorCriticfrom isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agentfrom isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapperfrom isaaclab_tasks.utils import get_checkpoint_pathfrom isaaclab_tasks.utils.hydra import hydra_task_configfrom isaaclab.utils.dict import class_to_dictimport berkeley_humanoid_lite.tasks  # noqa: F401# --- [兼容层] 复用 Wrapper ---class RslRlVecEnvWrapperFixed(RslRlVecEnvWrapper):    def __init__(self, env):        self.env = env        base_env = env.unwrapped        self.unwrapped_env = base_env         self.device = base_env.device                obs_manager = base_env.observation_manager                def _to_int(val):            if isinstance(val, (tuple, list)): return int(val[0])            return int(val)        self.num_obs = _to_int(obs_manager.group_obs_dim[&quot;policy&quot;])        self.num_actions = _to_int(base_env.action_manager.total_action_dim)        self.num_envs = base_env.num_envs        if &quot;critic&quot; in obs_manager.group_obs_dim:            self.num_privileged_obs = _to_int(obs_manager.group_obs_dim[&quot;critic&quot;])        else:            self.num_privileged_obs = None                    self.episode_length_buf = base_env.episode_length_buf    def _strip_tensordict(self, obs):        if obs is None: return None        if not isinstance(obs, torch.Tensor):            if isinstance(obs, dict):                return torch.cat(list(obs.values()), dim=-1)        return obs.view(obs.shape)    def get_observations(self):        obs = self.unwrapped.observation_manager.compute_group(&quot;policy&quot;)        return self._strip_tensordict(obs)    def get_privileged_observations(self):        if self.num_privileged_obs is not None:            obs = self.unwrapped.observation_manager.compute_group(&quot;critic&quot;)            return self._strip_tensordict(obs)        return None    def step(self, actions):        obs_dict, rew, terminated, truncated, extras = self.env.step(actions)        obs = self._strip_tensordict(obs_dict[&quot;policy&quot;])        privileged_obs = None        if &quot;critic&quot; in obs_dict:            privileged_obs = self._strip_tensordict(obs_dict[&quot;critic&quot;])        elif self.num_privileged_obs is not None:            privileged_obs = self.get_privileged_observations()        dones = terminated | truncated        return obs, privileged_obs, rew, dones, extras        def reset(self):        obs_dict, _ = self.env.reset()        obs = self._strip_tensordict(obs_dict[&quot;policy&quot;])        return obs, self.get_privileged_observations()# --- [参数过滤器] ---def filter_dict(raw_dict, whitelist):    return &#123;k: v for k, v in raw_dict.items() if k in whitelist&#125;PPO_WHITELIST = [&#x27;value_loss_coef&#x27;, &#x27;use_clipped_value_loss&#x27;, &#x27;clip_param&#x27;, &#x27;entropy_coef&#x27;,                  &#x27;num_learning_epochs&#x27;, &#x27;num_mini_batches&#x27;, &#x27;learning_rate&#x27;, &#x27;schedule&#x27;,                  &#x27;gamma&#x27;, &#x27;lam&#x27;, &#x27;desired_kl&#x27;, &#x27;max_grad_norm&#x27;]POLICY_WHITELIST = [&#x27;init_noise_std&#x27;, &#x27;actor_hidden_dims&#x27;, &#x27;critic_hidden_dims&#x27;, &#x27;activation&#x27;]# -------------------------------------------------------@hydra_task_config(args_cli.task, &quot;rsl_rl_cfg_entry_point&quot;)def main(env_cfg, agent_cfg: RslRlOnPolicyRunnerCfg):    # 1. 同步参数    agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)    env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else 1    # === 地形与高度修正 ===    if hasattr(env_cfg.scene, &quot;terrain&quot;):        print(&quot;[INFO] Play模式: 强制地形为无限平面 (Plane)&quot;)        env_cfg.scene.terrain.terrain_type = &quot;plane&quot;        env_cfg.scene.terrain.terrain_generator = None         if hasattr(env_cfg.scene, &quot;robot&quot;):        env_cfg.scene.robot.init_state.pos = (0.0, 0.0, 0)        print(&quot;[INFO] Play模式: 强制初始高度为 1.05m&quot;)    # 2. 设置日志根目录    log_root_path = os.path.join(&quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name)    log_root_path = os.path.abspath(log_root_path)        # 3. 寻找 Checkpoint    load_run = agent_cfg.load_run    if load_run == &quot;-1&quot;:        load_run = None        resume_path = None    try:        resume_path = get_checkpoint_path(log_root_path, load_run, agent_cfg.load_checkpoint)        print(f&quot;[INFO] 加载模型路径: &#123;resume_path&#125;&quot;)    except Exception as e:        print(f&quot;[ERROR] 无法找到模型 checkpoint: &#123;e&#125;&quot;)        simulation_app.close()        sys.exit(1)    # 4. 创建环境    print(f&quot;[INFO] 正在创建环境: &#123;args_cli.task&#125;&quot;)    env = gym.make(args_cli.task, cfg=env_cfg)    if isinstance(env.unwrapped, DirectMARLEnv):        env = multi_agent_to_single_agent(env)        env = RslRlVecEnvWrapperFixed(env)    # 5. 构造 Runner 配置    raw_dict = class_to_dict(agent_cfg) if not isinstance(agent_cfg, dict) else agent_cfg        # === [关键修复] 补全 runner 所需的所有键值 ===    rsl_cfg = &#123;        &quot;runner&quot;: &#123;            &quot;policy_class_name&quot;: &quot;ActorCritic&quot;,            &quot;algorithm_class_name&quot;: &quot;PPO&quot;,            &quot;experiment_name&quot;: agent_cfg.experiment_name,            &quot;checkpoint&quot;: resume_path,                        # --- 以下是本次修复补充的必要参数 ---            &quot;num_steps_per_env&quot;: agent_cfg.num_steps_per_env,  # 解决 KeyError            &quot;max_iterations&quot;: agent_cfg.max_iterations,        # 初始化需要            &quot;save_interval&quot;: agent_cfg.save_interval,          # 初始化需要            &quot;run_name&quot;: agent_cfg.run_name,        &#125;,        &quot;algorithm&quot;: filter_dict(raw_dict.get(&quot;algorithm&quot;, &#123;&#125;), PPO_WHITELIST),        &quot;policy&quot;: filter_dict(raw_dict.get(&quot;policy&quot;, &#123;&#125;), POLICY_WHITELIST),    &#125;    # 6. 初始化 Runner    # log_dir=None 表示不创建新的日志文件夹    runner = OnPolicyRunner(env, rsl_cfg, log_dir=None, device=agent_cfg.device)    runner.load(resume_path)        policy = runner.get_inference_policy(device=env.device)    # 7. 推理循环    print(&quot;-&quot; * 80)    print(&quot;[INFO] 启动成功！在 Isaac Sim 中按 &#x27;F&#x27; 键跟随机器人。&quot;)    print(&quot;-&quot; * 80)    obs, _ = env.reset()    while simulation_app.is_running():        with torch.inference_mode():            actions = policy(obs)            obs, _, _, _, _ = env.step(actions)    env.close()if __name__ == &quot;__main__&quot;:    main()    simulation_app.close()
-
-修改 .&#x2F;scripts&#x2F;rsl_rl&#x2F;train.py 的代码# scripts/rsl_rl/train.pyimport argparseimport osimport sys# --- [关键] 1. 初始化 AppLauncher (必须最先导入) ---from isaaclab.app import AppLauncher# 将当前目录加入路径以便导入 cli_args.pysys.path.append(os.path.dirname(os.path.abspath(__file__)))import cli_args# 解析参数parser = argparse.ArgumentParser(description=&quot;Train an RL agent with RSL-RL.&quot;)parser.add_argument(&quot;--video&quot;, action=&quot;store_true&quot;, default=False, help=&quot;是否在训练中录制视频&quot;)parser.add_argument(&quot;--video_length&quot;, type=int, default=200, help=&quot;录制视频步数&quot;)parser.add_argument(&quot;--disable_fabric&quot;, action=&quot;store_true&quot;, default=False, help=&quot;禁用 Fabric&quot;)parser.add_argument(&quot;--num_envs&quot;, type=int, default=None, help=&quot;仿真环境数量&quot;)parser.add_argument(&quot;--task&quot;, type=str, default=None, help=&quot;任务名称&quot;)parser.add_argument(&quot;--seed&quot;, type=int, default=None, help=&quot;随机种子&quot;)# 添加 RSL-RL 和 AppLauncher 的参数cli_args.add_rsl_rl_args(parser)AppLauncher.add_app_launcher_args(parser)args_cli, _ = parser.parse_known_args()# 启动仿真 Appapp_launcher = AppLauncher(args_cli)simulation_app = app_launcher.app# --- [关键] 2. 仿真启动后的导入 ---import gymnasium as gymimport datetimeimport pickleimport torchfrom omegaconf import OmegaConffrom rsl_rl.runners import OnPolicyRunnerimport isaaclab.utils.dict as dict_utilsfrom isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agentfrom isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapperfrom isaaclab_tasks.utils import parse_env_cfg# 导入自定义任务包以注册环境import berkeley_humanoid_lite.tasks  # noqa: F401def main():    &quot;&quot;&quot;训练主函数&quot;&quot;&quot;        # 1. 解析环境配置    env_cfg = parse_env_cfg(        args_cli.task,         device=args_cli.device,         num_envs=args_cli.num_envs if args_cli.num_envs is not None else 4096,         use_fabric=not args_cli.disable_fabric    )    if args_cli.seed is not None:        env_cfg.seed = args_cli.seed    # 2. 解析 RSL-RL Agent 配置    agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)    # 3. 设置日志目录    log_dir = os.path.join(        &quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name,         datetime.datetime.now().strftime(&quot;%Y-%m-%d_%H-%M-%S&quot;)    )    os.makedirs(log_dir, exist_ok=True)    # 4. 创建环境    render_mode = &quot;rgb_array&quot; if args_cli.video else None    env = gym.make(args_cli.task, cfg=env_cfg, render_mode=render_mode)    # 5. 录制视频包装    if args_cli.video:        video_kwargs = &#123;            &quot;video_folder&quot;: os.path.join(log_dir, &quot;videos&quot;, &quot;train&quot;),            &quot;step_trigger&quot;: lambda step: step % 1000 == 0, # 每 1000 步录一段            &quot;video_length&quot;: args_cli.video_length,            &quot;disable_logger&quot;: True,        &#125;        env = gym.wrappers.RecordVideo(env, **video_kwargs)    # 6. 环境包装    if isinstance(env.unwrapped, DirectMARLEnv):        env = multi_agent_to_single_agent(env)    env = RslRlVecEnvWrapper(env)    # 7. 保存配置 (修复之前报错的关键点)    # 使用 OmegaConf 和 Pickle 替代已删除的 dump_yaml/dump_pickle    config_dir = os.path.join(log_dir, &quot;configs&quot;)    os.makedirs(config_dir, exist_ok=True)        # 导出 Agent 配置    with open(os.path.join(config_dir, &quot;agent.yaml&quot;), &quot;w&quot;) as f:        f.write(OmegaConf.to_yaml(agent_cfg))        # 导出环境配置 (Pickle 备份)    with open(os.path.join(config_dir, &quot;env_cfg.pkl&quot;), &quot;wb&quot;) as f:        pickle.dump(env_cfg, f)    # 8. 初始化并运行训练    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)        # 如果指定了 resume，则加载旧模型    if agent_cfg.resume:        from isaaclab_tasks.utils import get_checkpoint_path        resume_path = get_checkpoint_path(            os.path.join(&quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name),             agent_cfg.load_run,             agent_cfg.load_checkpoint        )        print(f&quot;[INFO] Resuming from checkpoint: &#123;resume_path&#125;&quot;)        runner.load(resume_path)    print(f&quot;[INFO] 训练正式开始...&quot;)    runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)    # 9. 资源清理    env.close()if __name__ == &quot;__main__&quot;:    main()    simulation_app.close()
-
-硬件与底层渲染障碍其实，这个部分要解决也很简单的，就是就该参数num_envs就可以了，一般情况下，按照这样的阶梯设置512、1024、2048、4096来设置。
-]]></content>
-      <categories>
-        <category>Berkeley Humanoid Lite</category>
-      </categories>
-      <tags>
-        <tag>Python</tag>
-        <tag>Berkeley Humanoid Lite</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>创建一个简单的世界</title>
     <url>/2026/01/29/create-a-simple-world/</url>
     <content><![CDATA[如何启动 Isaac Sim在 VS Code 内输入以下代码
@@ -1264,6 +1895,28 @@ from isaacsim import SimulationAppsimulation_app = SimulationApp(&#123;&quot;hea
       <tags>
         <tag>Isaac Sim</tag>
         <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>什么是 FrankaPanda</title>
+    <url>/2026/02/02/what-is-franka-panda/</url>
+    <content><![CDATA[FrankaPanda 的长相
+用 Python 代码加载 FrankaPandafrom omni.isaac.franka import Frankaworld = World(stage_units_in_meters=1.0)world.scene.add_default_ground_plane()stage = world.stageFRANKA_USD = (    &quot;https://omniverse-content-production.s3-us-west-2.amazonaws.com/&quot;    &quot;Assets/Isaac/5.1/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd&quot;)franka_root = stage.DefinePrim(&quot;/World/FrankaRoot&quot;, &quot;Xform&quot;)franka_prim = stage.DefinePrim(&quot;/World/FrankaRoot/Franka&quot;, &quot;Xform&quot;)franka_prim.GetReferences().AddReference(FRANKA_USD)franka_prim.Load()# 包装为机器人对象franka_robot = world.scene.add(    Franka(        prim_path=&quot;/World/FrankaRoot/Franka&quot;,         name=&quot;my_franka&quot;    ))
+
+FrankaPandas 控制器的代码（非 ROS 2）from omni.isaac.franka.controllers import PickPlaceControllercontroller = PickPlaceController(    name=&quot;pick_place_controller&quot;,    gripper=franka_robot.gripper,    robot_articulation=franka_robot)
+
+FrankaPandas 的基础动作引入动作模块import numpy as npfrom omni.isaac.core.utils.types import ArticulationAction
+
+爪子控制张开动作action = franka_robot.gripper.forward(action=&quot;open&quot;)franka_robot.apply_action(action)   # 应用动作
+
+闭合爪子 (抓取)action = franka_robot.gripper.forward(action=&quot;close&quot;)franka_robot.apply_action(action)   # 应用动作]]></content>
+      <categories>
+        <category>FrankaPanda</category>
+      </categories>
+      <tags>
+        <tag>Isaac Sim</tag>
+        <tag>Franka</tag>
+        <tag>FrankaPanda</tag>
       </tags>
   </entry>
   <entry>
@@ -1306,28 +1959,6 @@ ros2 topic echo /chatter
       <tags>
         <tag>ROS 2</tag>
         <tag>Ubuntu</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>什么是 FrankaPanda</title>
-    <url>/2026/02/02/what-is-franka-panda/</url>
-    <content><![CDATA[FrankaPanda 的长相
-用 Python 代码加载 FrankaPandafrom omni.isaac.franka import Frankaworld = World(stage_units_in_meters=1.0)world.scene.add_default_ground_plane()stage = world.stageFRANKA_USD = (    &quot;https://omniverse-content-production.s3-us-west-2.amazonaws.com/&quot;    &quot;Assets/Isaac/5.1/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd&quot;)franka_root = stage.DefinePrim(&quot;/World/FrankaRoot&quot;, &quot;Xform&quot;)franka_prim = stage.DefinePrim(&quot;/World/FrankaRoot/Franka&quot;, &quot;Xform&quot;)franka_prim.GetReferences().AddReference(FRANKA_USD)franka_prim.Load()# 包装为机器人对象franka_robot = world.scene.add(    Franka(        prim_path=&quot;/World/FrankaRoot/Franka&quot;,         name=&quot;my_franka&quot;    ))
-
-FrankaPandas 控制器的代码（非 ROS 2）from omni.isaac.franka.controllers import PickPlaceControllercontroller = PickPlaceController(    name=&quot;pick_place_controller&quot;,    gripper=franka_robot.gripper,    robot_articulation=franka_robot)
-
-FrankaPandas 的基础动作引入动作模块import numpy as npfrom omni.isaac.core.utils.types import ArticulationAction
-
-爪子控制张开动作action = franka_robot.gripper.forward(action=&quot;open&quot;)franka_robot.apply_action(action)   # 应用动作
-
-闭合爪子 (抓取)action = franka_robot.gripper.forward(action=&quot;close&quot;)franka_robot.apply_action(action)   # 应用动作]]></content>
-      <categories>
-        <category>FrankaPanda</category>
-      </categories>
-      <tags>
-        <tag>Isaac Sim</tag>
-        <tag>Franka</tag>
-        <tag>FrankaPanda</tag>
       </tags>
   </entry>
 </search>
