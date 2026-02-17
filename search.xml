@@ -201,17 +201,17 @@ visualizer.step 会根据缓冲区里的最新数据（由 UDP 线程不断刷�
       </tags>
   </entry>
   <entry>
-    <title>The bimanual.py of Berkeley Humanoid Lite Lowlevel</title>
+    <title>The robot/bimanual.py of Berkeley Humanoid Lite Lowlevel</title>
     <url>/2026/02/10/The-bimanual-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
     <content><![CDATA[]]></content>
   </entry>
   <entry>
-    <title>The imu.py of Berkeley Humanoid Lite Lowlevel</title>
+    <title>The robot/imu.py of Berkeley Humanoid Lite Lowlevel</title>
     <url>/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
     <content><![CDATA[]]></content>
   </entry>
   <entry>
-    <title>Berkeley Humanoid Lite Lowlevel 的 humanoid.py</title>
+    <title>Berkeley Humanoid Lite Lowlevel 的 robot/humanoid.py</title>
     <url>/2026/02/10/The-humanoid-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
     <content><![CDATA[humanoid.py 运行在机器人机载计算机（如 Jetson Orin 或 NUC）上，负责连接真实的传感器和执行器，并管理机器人的运行状态。
 State 类class State:    INVALID = 0    IDLE = 1        # 闲置/阻尼模式    RL_INIT = 2     # 初始化过渡模式（缓慢移动到初始姿态）    RL_RUNNING = 3  # RL 策略接管控制模式
@@ -306,7 +306,7 @@ for entry in self.joints:    # 解包关节信息：总线对象、电机ID、�
       </tags>
   </entry>
   <entry>
-    <title>Berkeley Humanoid Lite 的 mujoco.py</title>
+    <title>Berkeley Humanoid Lite 的 environments/mujoco.py</title>
     <url>/2026/02/10/The-mujoco-py-of-Berkeley-Humanoid-Lite/</url>
     <content><![CDATA[MujocoEnvMujocoVisualizerMujocoSimulator]]></content>
       <categories>
