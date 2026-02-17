@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>在 Ubuntu 上安装 Isaac Sim 和 ROS 2 Humble</title>
+    <url>/2026/01/29/install-isaac-sim-and-Ros-2-in-Ubuntu-22-04/</url>
+    <content><![CDATA[Ubuntu的选择推荐使用Ubuntu 22.04.5 desktop amd64
+下面是安装教程
+如何安装 Ubuntu 22.04 LTS 桌面版 (图文教程) ? - 知乎
+对于分区，这部分非常重要，如果分错了，基本上就要重新安装系统了，因为我试过Ext 4在傲梅分区助手扩容的办法，最终，还是失败了。
+有个事情，得知道，反复将存储设备格式化，存储设备会报废的（曾经的教训）
+为了不出问题，请看下表1，进行分区
+
+
+
+分区名
+分区类型
+分区位置
+文件格式&#x2F;用于
+挂载地址
+大小（MB）
+
+
+
+EFI 分区
+主分区
+空间起始位置
+EFI 系统分区
+&#x2F;boot&#x2F;efi（安装时自动）
+2048
+
+
+SWAP 交换分区
+主分区
+空间起始位置
+交换空间（swap）
+——
+30720
+
+
+root 文件系统
+逻辑分区
+空间起始位置
+Ext4 日志文件系统
+&#x2F;
+153600
+
+
+用户文件系统
+逻辑分区
+空间起始位置
+Ext4 日志文件系统
+&#x2F;home
+剩余全部
+
+
+分区大小的时候，可使用这个进行换算  GB到MB换算
+如果虚拟机找不到U盘，ubuntu虚拟机识别不到移动硬盘的一种可能与解决方法_ubuntu读不到硬盘-CSDN博客
+安装ROS 2【ROS2实战】在中国地区 Ubuntu 22.04 上安装 ROS 2 Humble 教程
+安装 Isaac SimDownload Isaac Sim — Isaac Sim Documentation
+下载 Linux (x86_64)，这里的是5.1.0版本的
+然后，解压
+
+注意：路径内不能存在中文，否则 Isaac Sim 会闪退。  
+
+Ros 2 与 Isaac Sim连接运行 isaac-sim.selector.sh
+ROS Bridge Extension 选择 isaacsim.ros2.bridge
+Use Internal Ros2 Libraries 选择 humble
+点击 Start
+Isaac Sim第一次启动会有些慢
+然后，Create -&gt; Graphs -&gt; Action Graph
+在这个 Action Graph 绘出下图
+
+然后，点击 play
+
+在 Linux 命令行之内运行ros2 topic echo /clock，最后会出现时间信息，说明连接成功
+
+
+参考资料1. ubuntu22.04物理机双系统手动分区
+]]></content>
+      <categories>
+        <category>安装教程</category>
+      </categories>
+      <tags>
+        <tag>Isaac Sim</tag>
+        <tag>ROS 2</tag>
+        <tag>Ubuntu</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用 Python 打开 Isaac Sim</title>
+    <url>/2026/01/29/Using-Python-To-Open-Isaac-Sim/</url>
+    <content><![CDATA[前言要确保 Isaac Sim、Python、ROS 2、VS Code、Miniconda 都已正确安装和配置。
+安装依赖sudo apt install cmake build-essential -y
+
+安装 Isaac Lab使用以下命令Clone Isaac Lab：
+git clone https://github.com/isaac-sim/IsaacLab.git
+
+链接Isaac Sim和IsaacLabcd IsaacLabln -s $&#123;HOME&#125;/isaacsim _isaac_sim
+
+将 isaacsim 替换为 Isaac Sim 的实际路径。
+创建并激活Conda环境conda create -n isaaclab python=3.10 -yconda activate isaaclab
+
+用 Python 3.10 是为了确保与 Ros 2 Humble 兼容。
+安装Isaac Lab依赖./isaaclab.sh --install
+
+配置 .bashrc在 ~/.bashrc 文件中添加以下内容：
+source isaac-sim地址/setup_conda_env.shsource isaac-sim地址/setup_ros_env.sh
+
+写出 Python 代码来启动 Isaac Simfrom isaacsim import SimulationAppsimulation_app = SimulationApp(&#123;&quot;headless&quot;: False&#125;)from isaacsim.core.api import Worldworld = World(stage_units_in_meters=1.0)world.reset()while simulation_app.is_running():    world.step(render=True)simulation_app.close()
+
+理论上，如果配置成功，你就会看到 Isaac Sim Python 5.1
+]]></content>
+      <categories>
+        <category>安装教程</category>
+      </categories>
+      <tags>
+        <tag>Isaac Sim</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Franka 机械臂抓取一个方块</title>
+    <url>/2026/01/29/Franka-Catches-A-Cube/</url>
+    <content><![CDATA[]]></content>
+      <categories>
+        <category>示例教程</category>
+      </categories>
+      <tags>
+        <tag>Isaac Sim</tag>
+        <tag>ROS 2</tag>
+        <tag>Franka</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>弄一个简单的 ROS 2 程序</title>
+    <url>/2026/02/13/Make-an-Easy-ROS-2-Program/</url>
+    <content><![CDATA[前提条件确保你的 Conda 环境中安装了 rclpy 包。如果没有安装，可以使用以下命令进行安装：
+pip install rclpy
+
+创建 ROS 2 发布节点创建一个名为 simple_ros2_node.py 的 Python 文件，并添加以下代码：
+import rclpyfrom rclpy.node import Nodefrom std_msgs.msg import Stringclass MyRobotNode(Node):    def __init__(self):        super().__init__(&#x27;robot_brain&#x27;)        # 创建一个发布者，发布到 &#x27;chatter&#x27; 话题        self.publisher_ = self.create_publisher(String, &#x27;chatter&#x27;, 10)        # 每 3 秒发一次        self.timer = self.create_timer(3, self.timer_callback)    def timer_callback(self):        msg = String()        msg.data = &#x27;Robot is walking...&#x27;        self.publisher_.publish(msg)        self.get_logger().info(&#x27;Publishing: &quot;%s&quot;&#x27; % msg.data)def main():    rclpy.init() # 初始化    node = MyRobotNode()    rclpy.spin(node) # 开始循环处理    rclpy.shutdown() # 关闭if __name__ == &#x27;__main__&#x27;:    main()
+
+创建 ROS 2 监听节点import rclpyfrom rclpy.node import Nodefrom std_msgs.msg import Stringclass MinimalSubscriber(Node):    def __init__(self):        super().__init__(&#x27;minimal_subscriber&#x27;) # 初始化节点名称                # 创建订阅者：消息类型 String, 话题名称 &#x27;chatter&#x27;, 回调函数, 队列长度 10        self.subscription = self.create_subscription(            String,            &#x27;chatter&#x27;,            self.listener_callback,            10)        self.subscription  # 防止变量被垃圾回收 (Python特性)    def listener_callback(self, msg):        # 收到消息时的回调函数        self.get_logger().info(&#x27;I heard: &quot;%s&quot;&#x27; % msg.data)def main(args=None):    rclpy.init(args=args)    minimal_subscriber = MinimalSubscriber()    rclpy.spin(minimal_subscriber)    minimal_subscriber.destroy_node()    rclpy.shutdown()if __name__ == &#x27;__main__&#x27;:    main()
+
+运行节点在终端中运行以下命令来启动你的 ROS 2 节点：
+python node_one.py
+
+此时，你运行 ros2 topic list 会看到 /chatter。
+
+监听 node_one.py 发出的东西在终端中运行以下命令：
+ros2 topic echo /chatter
+
+你就会看到 data: Robot is walking...
+或者
+python node_two.py 
+
+你就会看到 [INFO] [1770962759.315087388] [minimal_subscriber]: I heard: &quot;Robot is walking...&quot;
+源码GitHub: IsaacSimPlusROS2&#x2F;An-Easy-Ros-2-Program
+]]></content>
+      <categories>
+        <category>ROS 2</category>
+      </categories>
+      <tags>
+        <tag>ROS 2</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Berkeley Humanoid Lite 的 scripts/sim2real/visualize.py</title>
+    <url>/2026/02/11/The-Berkeley-Humanoid-Lite-scripts-sim2real-visualize-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[scripts/sim2real/visualize.py 只负责接收数据并画图，不负责控制逻辑。
+初始化环境visualizer = MujocoVisualizer(Cfg(    &#123;        &quot;num_joints&quot;: 12,   # 机器人关节数量（Lite版本通常是12个自由度）        &quot;physics_dt&quot;: 0.001, # 物理仿真步长 1ms    &#125;))
+
+这里的 num_joints 会对应到 MujocoEnv 的这个部分
+if cfg.num_joints == 22:    self.mj_model = mujoco.MjModel.from_xml_path(&quot;source/berkeley_humanoid_lite_assets/data/mjcf/bhl_scene.xml&quot;)else:    self.mj_model = mujoco.MjModel.from_xml_path(&quot;source/berkeley_humanoid_lite_assets/data/mjcf/bhl_biped_scene.xml&quot;)
+
+UDP 接收线程def receive_udp_data(robot_observation_buffer):    # Setup UDP communication    # 监听 0.0.0.0:11000 (接收所有网卡数据)，目标地址设为本地(发送时用，这里主要只收)    udp = UDP((&quot;0.0.0.0&quot;, 11000), (&quot;127.0.0.1&quot;, 11000))    &quot;&quot;&quot;Thread function to receive UDP data.&quot;&quot;&quot;    while True:        # 阻塞式接收 Numpy 数组数据        robot_observations = udp.recv_numpy(dtype=np.float32)        if robot_observations is not None:            # [关键] 原地更新缓冲区，而不是创建新变量            robot_observation_buffer[:] = robot_observations
+
+共享数据缓冲区robot_observation_buffer = np.zeros((35,), dtype=np.float32)
+
+35 个维度通常包含：
+
+基座姿态（四元数 4）
+基座角速度（3）
+关节位置（12）
+关节速度（12）
+其他（如上一次动作指，或足端接触力等，共 4 个）
+
+具体含义取决于 berkeley_humanoid_lite 的定义，但 35 是非常典型的大小。
+启动线程与主循环udp_receive_thread = threading.Thread(target=receive_udp_data, args=(robot_observation_buffer,))udp_receive_thread.daemon = True  # 设为守护线程，主程序退出时它也会自动退出udp_receive_thread.start()while True:    visualizer.step(robot_observation_buffer)
+
+daemon = True：防止程序关闭时，后台 UDP 线程还在空转导致进程无法结束。
+visualizer.step 会根据缓冲区里的最新数据（由 UDP 线程不断刷新），更新 MuJoCo 中机器人的关节角度和基座位置，并渲染一帧画面。
+]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>The bimanual.py of Berkeley Humanoid Lite Lowlevel</title>
+    <url>/2026/02/10/The-bimanual-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>Berkeley Humanoid Lite Lowlevel 的 humanoid.py</title>
+    <url>/2026/02/10/The-humanoid-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[humanoid.py 运行在机器人机载计算机（如 Jetson Orin 或 NUC）上，负责连接真实的传感器和执行器，并管理机器人的运行状态。
+State 类class State:    INVALID = 0    IDLE = 1        # 闲置/阻尼模式    RL_INIT = 2     # 初始化过渡模式（缓慢移动到初始姿态）    RL_RUNNING = 3  # RL 策略接管控制模式
+
+在后面的 Humanoid 类的 step 方法中的 match-case 结构中，根据当前状态执行不同的控制逻辑：
+match (self.state):    # 状态 1: 闲置/准备    case State.IDLE:        # 目标设为当前测量值 -&gt; 也就是不发力移动        self.joint_position_target[:] = self.joint_position_measured[:]        # 检测手柄是否按下切换键 -&gt; 进入初始化        if self.next_state == State.RL_INIT:            # ... 切换电机到位置控制模式 (Position Mode) ...    # 状态 2: 初始化 (站起来)    case State.RL_INIT:        # 线性插值：从当前趴下的姿态，在 100 步内平滑过渡到站立姿态        if self.init_percentage &lt; 1.0:            self.init_percentage += 1 / 100.0            self.joint_position_target = linear_interpolate(self.starting_positions, self.rl_init_positions, self.init_percentage)        else:            # 站好后，等待手柄切换到 RUNNING            if self.next_state == State.RL_RUNNING:                self.state = self.next_state    # 状态 3: RL 运行中    case State.RL_RUNNING:        # 直接将神经网络输出的 actions 作为目标位置        for i in range(len(self.joints)):            self.joint_position_target[i] = actions[i]
+
+linear_interpolate 函数linear_interpolate 函数用于在初始化阶段平滑过渡机器人姿态，从趴下到站立。它接受起始位置、目标位置和当前的过渡百分比，返回一个新的目标位置。
+def linear_interpolate(start: np.ndarray, end: np.ndarray, percentage: float) -&gt; np.ndarray:    percentage = min(max(percentage, 0.0), 1.0)    target = start * (1. - percentage) + end * percentage    return target
+
+Humanoid 类Humanoid 类代表真实的机器人实体，它封装了所有硬件通信细节。
+__init__ 方法硬件通信链路初始化 (CAN总线)
+左臂绑定到 can0
+右臂绑定到 can1
+左腿绑定到 can2
+右腿绑定到 can3
+
+self.left_arm_transport = recoil.Bus(&quot;can0&quot;)self.right_arm_transport = recoil.Bus(&quot;can1&quot;)self.left_leg_transport = recoil.Bus(&quot;can2&quot;)self.right_leg_transport = recoil.Bus(&quot;can3&quot;)
+
+关节映射列表 self.joints格式：(总线对象, 电机ID, 关节名称)左腿 ID 均为奇数 (1, 3, 5, 7, 11, 13)，右腿 ID 均为偶数 (2, 4, 6, 8, 12, 14)每条腿 6 个自由度：跨部(Roll&#x2F;Yaw&#x2F;Pitch)、膝盖(Pitch)、脚踝(Pitch&#x2F;Roll)
+self.joints = [    # 左臂 (1-5)    (self.left_arm_transport,   1,  &quot;left_shoulder_pitch_joint&quot;),    (self.left_arm_transport,   3,  &quot;left_shoulder_roll_joint&quot;),    (self.left_arm_transport,   5,  &quot;left_shoulder_yaw_joint&quot;),    (self.left_arm_transport,   7,  &quot;left_elbow_pitch_joint&quot;),    (self.left_arm_transport,   9,  &quot;left_wrist_yaw_joint&quot;),    # 右臂 (6-10)    (self.right_arm_transport,  2,  &quot;right_shoulder_pitch_joint&quot;),    (self.right_arm_transport,  4,  &quot;right_shoulder_roll_joint&quot;),    (self.right_arm_transport,  6,  &quot;right_shoulder_yaw_joint&quot;),    (self.right_arm_transport,  8,  &quot;right_elbow_pitch_joint&quot;),    (self.right_arm_transport,  10, &quot;right_wrist_yaw_joint&quot;),    # 左腿 (11-16)    (self.left_leg_transport,   1,  &quot;left_hip_roll_joint&quot;),    (self.left_leg_transport,   3,  &quot;left_hip_yaw_joint&quot;),    (self.left_leg_transport,   5,  &quot;left_hip_pitch_joint&quot;),    (self.left_leg_transport,   7,  &quot;left_knee_pitch_joint&quot;),    (self.left_leg_transport,   11, &quot;left_ankle_pitch_joint&quot;),    (self.left_leg_transport,   13, &quot;left_ankle_roll_joint&quot;),    # 右腿 (17-22)    (self.right_leg_transport,  2,  &quot;right_hip_roll_joint&quot;),    (self.right_leg_transport,  4,  &quot;right_hip_yaw_joint&quot;),    (self.right_leg_transport,  6,  &quot;right_hip_pitch_joint&quot;),    (self.right_leg_transport,  8,  &quot;right_knee_pitch_joint&quot;),    (self.right_leg_transport,  12, &quot;right_ankle_pitch_joint&quot;),    (self.right_leg_transport,  14, &quot;right_ankle_roll_joint&quot;),]
+
+惯性测量单元（IMU）初始化self.imu = SerialImu(baudrate=Baudrate.BAUD_460800)self.imu.run_forever()
+
+遥控手柄（Joystick&#x2F;Gamepad）初始化# Start joystick threadself.command_controller = Se2Gamepad()self.command_controller.run()
+
+系统状态机初始化self.state = State.IDLEself.next_state = State.IDLE
+
+
+self.state：当前状态
+self.next_state：下一个状态
+
+关键参数更新# 3. 更新 RL 初始位置 (长度必须为 22)# 前 10 个是手臂（通常设为 0），后 12 个是腿部self.rl_init_positions = np.zeros(22, dtype=np.float32)self.rl_init_positions[10:] = [0.0, 0.0, -0.2, 0.4, -0.3, 0.0, 0.0, 0.0, -0.2, 0.4, -0.3, 0.0]# 4. 更新轴向修正 (长度必须为 22)self.joint_axis_directions = np.ones(22, dtype=np.float32)# 这里需要根据手臂电机的实际安装方向修改前 10 位self.joint_axis_directions[10:] = [-1, 1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1]# 5. 更新观测缓冲区维度# 4(四元数) + 3(角速度) + 22(关节位置) + 22(关节速度) + 1(模式) + 3(指令) = 55self.n_lowlevel_states = 4 + 3 + 22 + 22 + 1 + 3self.lowlevel_states = np.zeros(self.n_lowlevel_states, dtype=np.float32)
+
+RL 初始化控制器变量用于平滑过渡（Interpolation）
+# 初始化进度（0.0 到 1.0）self.init_percentage = 0.0# 用于存储启动初始化那一刻的关节位置self.starting_positions = np.zeros_like(self.joint_position_target, dtype=np.float32)
+
+加载硬件校准文件在实验室组装机器人时，电机的编码器零点和物理上的“腿部垂直”位置通常会有几度的偏差。这些偏差需要通过校准文件进行补偿。
+config_path = &quot;calibration.yaml&quot;with open(config_path, &quot;r&quot;) as f:    config = OmegaConf.load(f) # 使用 OmegaConf 加载 YAML 配置position_offsets = np.array(config.get(&quot;position_offsets&quot;, None))
+
+安全性检查与赋值# 强制检查：确保校准文件中的偏移量数量与实际电机数量一致（12个或22个）assert position_offsets.shape[0] == len(self.joints)# 将校准值存入类的属性中，供后续 update_joints 函数使用self.position_offsets[:] = position_offsets
+
+enter_damping 方法进入阻尼模式（Damping Mode）
+在阻尼模式下，电机不会主动旋转到某个角度，但会像“液压杆”一样产生阻力，防止机器人因为重力瞬间瘫痪倒地，同时也保护电机不被突发的巨大力矩烧毁。
+初始化参数数组，长度与电机数量一致self.joint_kp = np.zeros((len(self.joints),), dtype=np.float32)      # 比例增益（刚度）self.joint_kd = np.zeros((len(self.joints),), dtype=np.float32)      # 微分增益（阻尼）self.torque_limit = np.zeros((len(self.joints),), dtype=np.float32)  # 力矩限制
+
+设定阻尼模式下的安全参数# Kp=20: 较低的刚度，电机不会剧烈反弹# Kd=2:  一定的阻尼，使动作变得粘稠、平滑# Torque Limit=4: 较低的力矩上限（4Nm），即使发生碰撞也不会伤人或损坏结构self.joint_kp[:] = 20self.joint_kd[:] = 2self.torque_limit[:] = 4
+
+遍历每一个关节，逐个通过 CAN 总线发送配置for i, entry in enumerate(self.joints):    # 解包关节信息：总线接口、电机ID、关节名称    bus, device_id, joint_name = entry    print(f&quot;Initializing joint &#123;joint_name&#125;:&quot;)    print(f&quot;  kp: &#123;self.joint_kp[i]&#125;, kd: &#123;self.joint_kd[i]&#125;, torque limit: &#123;self.torque_limit[i]&#125;&quot;)        # 首先将模式设为 IDLE（空闲），停止电机当前的任何动作    bus.set_mode(device_id, recoil.Mode.IDLE)    # 必须休眠 1ms，给 CAN 总线和电机驱动器处理指令的时间    time.sleep(0.001)        # 写入位置环比例增益 Kp    bus.write_position_kp(device_id, self.joint_kp[i])    time.sleep(0.001)        # 写入位置环微分增益 Kd    bus.write_position_kd(device_id, self.joint_kd[i])    time.sleep(0.001)        # 写入力矩限制，这是防止过载的“保险丝”    bus.write_torque_limit(device_id, self.torque_limit[i])    time.sleep(0.001)        # “喂狗”操作：发送心跳包，告诉电机驱动器通信正常，不要进入保护模式    bus.feed(device_id)        # 最后，正式切换到 DAMPING（阻尼）模式    # 此时电机开始受电，你会听到轻微电流声，感觉到关节变“硬”了    bus.set_mode(device_id, recoil.Mode.DAMPING)
+
+bus 是 recoil.Bus 对象（在Berkeley-Humanoid-Lite/source/berkeley_humanoid_lite_lowlevel/berkeley_humanoid_lite_lowlevel/recoil/core.py中定义），表示与电机通信的 CAN 总线接口
+stop 方法关闭异步传感器线程# 停止 IMU 串口读取线程self.imu.stop()# 停止手柄输入监听线程self.command_controller.stop()
+
+进入阻尼模式for entry in self.joints:    bus, device_id, _ = entry    # 将所有电机切换到 DAMPING（阻尼）模式    # 作用：此时电机虽然不再主动发力，但会产生阻力，像“软刹车”一样    # 防止机器人因为重力瞬间“瘫痪”倒地，能缓慢蹲下或维持姿势    bus.set_mode(device_id, recoil.Mode.DAMPING)
+
+阻塞等待try:    # 进入死循环，此时机器人处于有阻力的“挂起”状态    # 这样操作员有时间扶住机器人，或者将其放回架子上    while True:        passexcept KeyboardInterrupt:    # 当用户第二次按下 Ctrl+C 时，触发最终关机    print(&quot;Exiting damping mode.&quot;)
+
+彻底断电for entry in self.joints:    bus, device_id, _ = entry    # 将电机设为 IDLE（空闲/完全断电）模式    # 此时电机完全失去磁力，关节变得彻底松弛（Limp）    bus.set_mode(device_id, recoil.Mode.IDLE)
+
+清理底层通信接口*_transport.stop() 是为了关闭 Linux 系统的 socketcan 接口
+# 如果有手臂，关闭手臂的 CAN 总线（当前注释中）self.left_arm_transport.stop()self.right_arm_transport.stop()# 关闭左右腿的 CAN 总线，释放 SocketCAN 资源self.left_leg_transport.stop()self.right_leg_transport.stop()
+
+get_observations 方法内存视图切片imu_quaternion = self.lowlevel_states[0:4]       # 0-3: 四元数 (w, x, y, z)imu_angular_velocity = self.lowlevel_states[4:7] # 4-6: 角速度joint_positions = self.lowlevel_states[7:19]     # 7-18: 12个关节的角度joint_velocities = self.lowlevel_states[19:31]   # 19-30: 12个关节的速度mode = self.lowlevel_states[31:32]               # 31: 当前运行模式velocity_commands = self.lowlevel_states[32:35]  # 32-34: 目标线速度x, y 和角速度yaw
+
+更新传感器数据它的核心任务是将来自不同硬件（IMU、电机、手柄）的离散数据，封装成一个符合神经网络输入要求的 ** 35 维观测向量**
+# 从 IMU 线程读取最新的四元数数据imu_quaternion[:] = self.imu.quaternion[:]# 【关键】单位转换：IMU 返回的是度/秒 (deg/s)，但 RL 算法期望弧度/秒 (rad/s)# 必须在此转换，否则机器人会因为感知的旋转速度过大而疯狂抽搐imu_angular_velocity[:] = np.deg2rad(self.imu.angular_velocity[:])# 将底层 CAN 总线读取到的电机实际位置和速度填入缓冲区joint_positions[:] = self.joint_position_measured[:]joint_velocities[:] = self.joint_velocity_measured[:]
+
+更新用户指令# 读取手柄上的模式开关（如：切换到 3.0 代表开启 RL 行走）mode[0] = self.command_controller.commands[&quot;mode_switch&quot;]# 读取摇杆给出的目标速度velocity_commands[0] = self.command_controller.commands[&quot;velocity_x&quot;]velocity_commands[1] = self.command_controller.commands[&quot;velocity_y&quot;]velocity_commands[2] = self.command_controller.commands[&quot;velocity_yaw&quot;]# 将手柄的模式指令同步到系统状态机的“下一状态”变量中self.next_state = self.command_controller.commands[&quot;mode_switch&quot;]# 返回填充完毕的完整 35 维向量return self.lowlevel_states
+
+update_joint_group 方法从算法到硬件 (Sim -&gt; Real)计算相对位置position_target_l = (self.joint_position_target[joint_id_l] + self.position_offsets[joint_id_l]) * self.joint_axis_directions[joint_id_l]position_target_r = (self.joint_position_target[joint_id_r] + self.position_offsets[joint_id_r]) * self.joint_axis_directions[joint_id_r]
+
+发送 CAN 数据包# self.joints[id][0] 是 Bus 对象，[id][1] 是电机 ID# transmit_pdo_2 是一种高效的实时数据帧，同时发送位置目标。# 这里将 velocity_target 设为 0，意味着主要依靠电机的内部位置环(Kp)来跟踪。self.joints[joint_id_l][0].transmit_pdo_2(self.joints[joint_id_l][1], position_target=position_target_l, velocity_target=0.0)self.joints[joint_id_r][0].transmit_pdo_2(self.joints[joint_id_r][1], position_target=position_target_r, velocity_target=0.0)   
+
+从硬件到算法 (Real -&gt; Sim)接收电机反馈position_measured_l, velocity_measured_l = self.joints[joint_id_l][0].receive_pdo_2(self.joints[joint_id_l][1])position_measured_r, velocity_measured_r = self.joints[joint_id_r][0].receive_pdo_2(self.joints[joint_id_r][1])
+
+逆向转换if position_measured_l is not None:    # 逆公式：算法测量位置 = (硬件原始位置 * 轴向系数) - 校准偏移    self.joint_position_measured[joint_id_l] = (position_measured_l * self.joint_axis_directions[joint_id_l]) - self.position_offsets[joint_id_l]if velocity_measured_l is not None:    # 速度只需要修正方向，不需要修正偏置（导数不含常数项）    self.joint_velocity_measured[joint_id_l] = velocity_measured_l * self.joint_axis_directions[joint_id_l]# 右腿执行同样的逻辑if position_measured_r is not None:    self.joint_position_measured[joint_id_r] = (position_measured_r * self.joint_axis_directions[joint_id_r]) - self.position_offsets[joint_id_r]if velocity_measured_r is not None:    self.joint_velocity_measured[joint_id_r] = velocity_measured_r * self.joint_axis_directions[joint_id_r]```     ### `reset` 方法重置机器人环境接口。```pythondef reset(self):    # 1. 调用 get_observations() 获取当前硬件的最底层状态（IMU、关节、手柄指令）    obs = self.get_observations()        # 2. 返回这个观测向量，作为策略网络推理的起点    return obs
+
+step 方法该函数通过一个有限状态机 (Finite State Machine) 来管理机器人的行为，确保机器人能够安全地从静止状态过渡到行走状态。
+def step(self, actions: np.ndarray):    &quot;&quot;&quot;    执行一个控制周期。    参数 actions: 神经网络输出的动作向量（目标关节位置）。    &quot;&quot;&quot;    # 使用 match-case 语法处理不同的系统状态    match (self.state):                # --- 状态 1: IDLE (闲置/待机) ---        case State.IDLE:            # 目标位置始终设为当前测量值，确保电机不发力移动，保持“瘫软”或“阻尼”状态            self.joint_position_target[:] = self.joint_position_measured[:]            # 检查手柄是否下达了“进入初始化”的指令            if self.next_state == State.RL_INIT:                print(&quot;Switching to RL initialization mode&quot;)                self.state = self.next_state # 切换状态                # 遍历所有关节，将其从阻尼模式切换到位置控制模式                for entry in self.joints:                    bus, device_id, _ = entry                    bus.feed(device_id) # 喂狗（激活通信）                    bus.set_mode(device_id, recoil.Mode.POSITION) # 开启位置环控制                # 记录切换瞬间的关节位置，作为插值的起点                self.starting_positions = self.joint_position_target[:]                self.init_percentage = 0.0 # 重置插值进度        # --- 状态 2: RL_INIT (初始化过渡/缓慢站立) ---        case State.RL_INIT:            print(f&quot;init: &#123;self.init_percentage:.2f&#125;&quot;)            # 如果进度未完成（小于 100%）            if self.init_percentage &lt; 1.0:                # 每一帧增加 1% 的进度（如果是 500Hz 频率，则站立过程耗时 0.2 秒）                self.init_percentage += 1 / 100.0                self.init_percentage = min(self.init_percentage, 1.0) # 防止溢出                # 【核心逻辑】线性插值：让关节从初始位置平滑移动到 RL 算法要求的站立姿态                # 这样可以防止机器人突然“弹起”造成硬件损坏                self.joint_position_target = linear_interpolate(self.starting_positions, self.rl_init_positions, self.init_percentage)            else:                # 初始化完成后，检查手柄是否下达“正式运行”指令                if self.next_state == State.RL_RUNNING:                    print(&quot;Switching to RL running mode&quot;)                    self.state = self.next_state                # 如果用户想切回 IDLE，则进入阻尼模式                if self.next_state == State.IDLE:                    print(&quot;Switching to idle mode&quot;)                    self.state = self.next_state                    for entry in self.joints:                        bus, device_id, _ = entry                        bus.set_mode(device_id, recoil.Mode.DAMPING)        # --- 状态 3: RL_RUNNING (RL 策略正式接管控制) ---        case State.RL_RUNNING:            # 直接将神经网络输出的 actions 映射到电机的目标位置            for i in range(len(self.joints)):                self.joint_position_target[i] = actions[i]            # 检查手柄是否下达“紧急停止/切回待机”指令            if self.next_state == State.IDLE:                print(&quot;Switching to idle mode&quot;)                self.state = self.next_state                for entry in self.joints:                    bus, device_id, _ = entry                    bus.set_mode(device_id, recoil.Mode.DAMPING)    # 【执行层】将计算好的 self.joint_position_target 通过 CAN 总线发送给电机    self.update_joints()    # 【感知层】采集当前时刻最新的 IMU 和电机数据，封装成观测向量    obs = self.get_observations()    # 返回观测值，供给神经网络下一帧推理使用    return obs
+
+update_joints 方法这段代码最核心的地方在于它将 左腿（索引 0-5） 和 右腿（索引 6-11） 的对应关节进行了“成对更新”。
+def update_joints(self):    &quot;&quot;&quot;    全量更新所有关节的通信函数。    按照 6 组配对，依次处理左腿和右腿对应的电机。    &quot;&quot;&quot;    # 每一行代表一组对称的关节：(左腿关节索引, 右腿关节索引)        # 1. 更新左右髋部侧摆 (Hip Roll)    self.update_joint_group(0, 6)        # 2. 更新左右髋部偏航/转动 (Hip Yaw)    self.update_joint_group(1, 7)        # 3. 更新左右髋部俯仰 (Hip Pitch)    self.update_joint_group(2, 8)        # 4. 更新左右膝盖俯仰 (Knee Pitch)    self.update_joint_group(3, 9)        # 5. 更新左右脚踝俯仰 (Ankle Pitch)    self.update_joint_group(4, 10)        # 6. 更新左右脚踝侧摆 (Ankle Roll)    self.update_joint_group(5, 11)
+
+check_connection 方法遍历电机列表，逐一发送 Ping 指令并等待反馈。
+for entry in self.joints:    # 解包关节信息：总线对象、电机ID、关节名称    bus, device_id, joint_name = entry        # 打印当前正在检查的关节名称    # end=&quot;\t&quot; 的作用是让结果 (OK/ERROR) 显示在名称后面，而不是换行    print(f&quot;Pinging &#123;joint_name&#125; ... &quot;, end=&quot;\t&quot;)        # 【核心操作】调用底层总线接口发送 Ping 帧    # 它会往 CAN 总线发一个查询包，如果对应 ID 的电机驱动器在线，会回传一个应答包    result = bus.ping(device_id)        # 判断返回结果    if result:        print(&quot;OK&quot;)    # 通讯正常    else:        print(&quot;ERROR&quot;) # 通讯失败，可能是没通电、CAN线断了或 ID 设置错误        # 每次检查后休眠 0.1 秒    # 作用：防止短时间内发送过多查询帧导致 CAN 总线拥堵，保证读取的可靠性    time.sleep(0.1)]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>The imu.py of Berkeley Humanoid Lite Lowlevel</title>
+    <url>/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>Berkeley Humanoid Lite 的 mujoco.py</title>
+    <url>/2026/02/10/The-mujoco-py-of-Berkeley-Humanoid-Lite/</url>
+    <content><![CDATA[MujocoEnvMujocoVisualizerMujocoSimulator]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Berkeley Humanoid Lite Lowlevel 的 policy/config.py</title>
+    <url>/2026/02/10/The-policy-config-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[Cfg 类策略配置 (Policy)policy_checkpoint_path: str
+
+policy_checkpoint_path: 训练好的神经网络模型文件（.pt 或 .jit）的路径。
+对应的 Berkeley-Humanoid-Lite/configs/policy_biped_50hz.yaml 文件中，它有这样的参数：
+policy_checkpoint_path: &quot;checkpoints/policy_biped_50hz.onnx&quot;
+
+网络配置 (Networking)ip_robot_addr: strip_policy_obs_port: intip_host_addr: strip_policy_acs_port: int
+
+定义了机器人（Robot）和策略服务器（Host）之间的 IP 地址及端口。这通常用于离机控制：算力强大的 PC 跑策略，通过网络将指令发给算力较弱的机器人控制器。
+对应的 Berkeley-Humanoid-Lite/configs/policy_biped_50hz.yaml 文件中，它有这样的参数：
+ip_robot_addr: 127.0.0.1ip_policy_obs_port: 10000ip_host_addr: 127.0.0.1ip_policy_acs_port: 10001
+
+物理&#x2F;时间步长 (Physics)control_dt: floatpolicy_dt: floatphysics_dt: floatcutoff_freq: float
+
+physics_dt: 物理引擎计算的步长（如 1ms）。
+control_dt: 底层 PD 控制器的更新步长。
+policy_dt: 神经网络策略的决策步长（如 20ms &#x2F; 50Hz）。
+对应的 Berkeley-Humanoid-Lite/configs/policy_biped_50hz.yaml 文件中，它有这样的参数：
+control_dt: 0.004policy_dt: 0.02physics_dt: 0.0005cutoff_freq: 1000
+
+关节&#x2F;控制参数 (Articulation)num_joints: intjoints: list[str]joint_kp: list[float] | floatjoint_kd: list[float] | floateffort_limits: list[float]default_base_position: list[float]default_joint_positions: list[float]
+
+num_joints: 关节数量（双足版通常为 12）。
+joint_kp &#x2F; joint_kd: 底层电机的刚度和阻尼增益。
+effort_limits: 电机最大扭矩限制。
+default_...: 机器人重置时的初始位置。
+对应的 Berkeley-Humanoid-Lite/configs/policy_biped_50hz.yaml 文件中，它有这样的参数：
+num_joints: 12joints:- leg_left_hip_roll_joint- leg_left_hip_yaw_joint- leg_left_hip_pitch_joint- leg_left_knee_pitch_joint- leg_left_ankle_pitch_joint- leg_left_ankle_roll_joint- leg_right_hip_roll_joint- leg_right_hip_yaw_joint- leg_right_hip_pitch_joint- leg_right_knee_pitch_joint- leg_right_ankle_pitch_joint- leg_right_ankle_roll_jointjoint_kp:- 20.0- 20.0- 20.0- 20.0- 20.0- 20.0- 20.0- 20.0- 20.0- 20.0- 20.0- 20.0joint_kd:- 2.0- 2.0- 2.0- 2.0- 2.0- 2.0- 2.0- 2.0- 2.0- 2.0- 2.0- 2.0effort_limits:- 5.0- 5.0- 5.0- 5.0- 5.0- 5.0- 5.0- 5.0- 5.0- 5.0- 5.0- 5.0default_base_position:- 0.0- 0.0- 0.0default_joint_positions:- 0.0- 0.0- -0.2- 0.4- -0.3- 0.0- 0.0- 0.0- -0.2- 0.4- -0.3- 0.0
+
+观测与历史 (Observation)num_observations: inthistory_length: int
+
+num_observations (观测值维度): 这个数值通常是 35
+
+基座姿态 (4维)：四元数 [w, x, y, z]，告诉机器人它是站着的还是歪的。
+基座角速度 (3维)：陀螺仪数据 [wx, wy, wz]，告诉机器人旋转有多快。
+关节位置 (12维)：12个电机的当前转角，告诉机器人现在的姿势。
+关节速度 (12维)：12个电机的转动速度，告诉机器人四肢运动的趋势。
+控制指令 (4维)：[mode, vx, vy, vyaw]，告诉机器人用户想让它干什么。
+
+history_length: 观测序列的长度。人形机器人通常需要过去几帧的数据（History）来弥补传感器延迟或估计线速度。
+
+通常在 5 到 20 之间。
+输入总规模：神经网络实际接收的向量长度 &#x3D; num_observations × history_length。
+
+命令配置（Command configurations）command_velocity: list[float]
+
+这个列表通常包含 3 个维度，代表机器人在二维平面上的运动目标。
+
+索引 0 (Velocity X): 前进&#x2F;后退的目标线速度（单位：米&#x2F;秒，$m&#x2F;s$）。
+正值代表向前走，负值代表向后走。
+
+
+索引 1 (Velocity Y): 左右横移的目标线速度（单位：米&#x2F;秒，$m&#x2F;s$）。
+正值代表向左横移，负值代表向右横移。
+
+
+索引 2 (Yaw Rate): 转向的目标角速度（单位：弧度&#x2F;秒，$rad&#x2F;s$）。
+正值代表左转（逆时针），负值代表右转（顺时针）。
+
+
+
+在配置文件（YAML）中的样子
+对应的 Berkeley-Humanoid-Lite/configs/policy_biped_50hz.yaml 文件中，它有这样的参数：
+command_velocity:- -0.419607937335968- -0.05113796889781952- -0.678446888923645
+
+动作配置 (Action)num_actions: intaction_indices: list[int]action_scale: floataction_limit_lower: floataction_limit_upper: float
+
+num_actions（动作维度）: 神经网络输出层的神经元数量。
+
+对于 Berkeley Humanoid Lite 的双足版本，这个值通常是 12（每条腿 6 个关节：髋部转动、髋部侧摆、髋部俯仰、膝盖俯仰、脚踝俯仰、脚踝侧摆）。
+
+action_indices（动作索引映射）: 将神经网络输出的 12 个值映射到仿真器或硬件中特定关节的索引。
+
+仿真模型（URDF&#x2F;MJCF）中可能包含 20 多个关节（包括固定不动的躯干、手臂等），但 RL 策略可能只控制其中的 12 个行走关节。
+通过 action_indices，代码知道：actions[0] 应该发给 ID 为 0 的左跨关节，actions[1] 发给 ID 为 1 的关节。
+
+action_scale（动作缩放因子）: 将神经网络的输出值（通常是归一化的）转化为实际的物理角度（弧度）。
+
+神经网络为了训练稳定，其输出通常被限制在 $[-1, 1]$ 之间，但是机器人关节可能需要移动 $\pm 0.5$ 弧度。
+计算公式：$\text{实际目标角度} &#x3D; \text{默认姿态角度} + (Action × action_scale)$。
+
+action_limit_lower &#x2F; action_limit_upper（动作限制）: 对神经网络的原始输出值进行硬性截断（Clip）。
+
+确保神经网络不会输出一个过大的值导致电机转动到机械死角或打坏电线。
+在训练初期，随机的动作可能非常狂野，通过限制动作范围，可以防止机器人因为动作过载而频繁“炸机”。
+
+对应的 Berkeley-Humanoid-Lite/configs/policy_biped_50hz.yaml 文件中，它有这样的参数：
+num_actions: 12action_scale: 0.25action_indices:- 0- 1- 2- 3- 4- 5- 6- 7- 8- 9- 10- 11action_limit_lower: -10000action_limit_upper: 10000]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+        <tag>Lowlevel</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>The recoil/can.py of Berkeley Humanoid Lite Lowlevel</title>
+    <url>/2026/02/10/The-recoil-can-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>The recoil/core.py of Berkeley Humanoid Lite Lowlevel</title>
+    <url>/2026/02/10/The-recoil-core-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[]]></content>
+  </entry>
+  <entry>
+    <title>在 Isaac Sim 里面训练 Berkeley Humanoid Lite</title>
+    <url>/2026/02/10/Train-the-Berkeley-Humanoid-Lite/</url>
+    <content><![CDATA[前期提要在Berkeley Humanoid Lite的getting-started-with-software&#x2F;training-environment中，给出了安装 Training Environment 的办法。
+getting-started-with-software部分主要讲述了一件事：通过不断的“试错”，把一个只会原地瘫倒的机器人 3D 模型，训练成一个能跑、能跳、能平衡的“智能体”。
+这里就不说了，我写一些我遇到的问题的解决方法
+Carb 库丢失遇到的错误 No module named &#39;carb._carb&#39; 和 TypeError: &#39;NoneType&#39; object is not callable
+(berkeley-humanoid-lite) mryan2005@venti:~/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite$ python ./scripts/rsl_rl/play.py --task Velocity-Berkeley-Humanoid-Lite-v0 --num_envs 16[Warning] Unable to expose &#x27;isaacsim.simulation_app&#x27; API: No module named &#x27;carb._carb&#x27;[INFO][AppLauncher]: Using device: cuda:0[INFO][AppLauncher]: Loading experience file: /home/mryan2005/IsaacLab/apps/isaacsim_4_5/isaaclab.python.kitTraceback (most recent call last):File &quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite/./scripts/rsl_rl/play.py&quot;, line 31, in &lt;module&gt;app_launcher = AppLauncher(args_cli)File &quot;/home/mryan2005/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py&quot;, line 131, in initself._create_app()File &quot;/home/mryan2005/IsaacLab/source/isaaclab/isaaclab/app/app_launcher.py&quot;, line 823, in _create_appself._app = SimulationApp(self._sim_app_config, experience=self._sim_experience_file)TypeError: &#x27;NoneType&#x27; object is not callable
+
+核心原因Python 环境没有正确加载 Isaac Sim 的底层库。
+修复环境链接我的 Isaac Sim 5.1 的安装路径是在 /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64
+重新配置 Isaac Lab 链接在 IsaacLab 根目录下执行
+cd ~/IsaacLab# 将路径替换为你实际的 Isaac Sim 5.1 路径ln -sfn /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64 _isaac_sim
+
+flatdict 无法安装# 1. 下载 flatdict 源码包wget https://pypi.tuna.tsinghua.edu.cn/packages/3e/0d/424de6e5612f1399ff69bf86500d6a62ff0a4843979701ae97f120c7f1fe/flatdict-4.0.1.tar.gz# 2. 解压tar -xvf flatdict-4.0.1.tar.gzcd flatdict-4.0.1# 3. [核心] 使用对应的 Python 解释器直接运行安装脚本# 如果是装给 Isaac Sim 内部：/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64/python.sh setup.py install# 如果是装给 Conda 环境：# python setup.py install# 4. 检查是否成功cd ..rm -rf flatdict-4.0.1*
+
+numpy、tensorboard 不存在# 1. 确保已彻底退出 Conda (直到命令提示符前没有 (base) 等字样)conda deactivate# 2. 定义 Isaac Sim 路径export ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;# 4. 使用禁用隔离模式安装 flatdict 到内部环境$ISAACSIM_PATH/python.sh -m pip install numpy tensorboard --no-build-isolation# 5. 验证$ISAACSIM_PATH/python.sh -c &quot;import numpy; print(&#x27;Isaac Sim 内部 numpy 安装成功&#x27;)&quot;
+
+路径污染编写 run_play.sh#!/bin/bashexport ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;export ISAAC_LAB_PATH=&quot;/home/mryan2005/IsaacLab&quot;export PROJECT_ROOT=&quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite&quot;unset PYTHONPATHunset CONDA_PREFIXunset PYTHONHOME# 1. 删除 Omniverse 通用缓存 (包含旧版扩展记录)rm -rf ~/.cache/ovrm -rf ~/.cache/nvidia/GLCache# 2. 删除着色器缓存 (强制 5.1 重新生成)rm -rf ~/.nvidia-shader-cache# 3. 删除 Isaac Sim 5.1 的运行缓存（需要修改路径！！！！）rm -rf ~/isaac-sim-standalone-5.1.0-linux-x86_64/kit/data/Kit/Isaac-Sim/5.1/cacheexport PYTHONPATH=$PROJECT_ROOT/source/berkeley_humanoid_liteexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_assetsexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/isaaclabexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_rlexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_tasksexport ISAACLAB_EXP_FILE=&quot;$ISAACSIM_PATH/apps/isaacsim.python.kit&quot;cd $PROJECT_ROOT$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/playNew.py \    --task Velocity-Berkeley-Humanoid-Lite-v0 \    --num_envs 1 \    --load_run 2026-02-10_15-54-39
+
+编写 run_train.sh#!/bin/bashexport ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;export ISAAC_LAB_PATH=&quot;/home/mryan2005/IsaacLab&quot;export PROJECT_ROOT=&quot;/home/mryan2005/berkeley_humanoid_isaac/Berkeley-Humanoid-Lite&quot;export PYTHONPATH=&quot;&quot;export PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_liteexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_assetsexport PYTHONPATH=$PYTHONPATH:$PROJECT_ROOT/source/berkeley_humanoid_lite_lowlevelexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/isaaclabexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_rlexport PYTHONPATH=$PYTHONPATH:$ISAAC_LAB_PATH/source/extensions/omni.isaac.lab_tasksexport ISAACLAB_EXP_FILE=&quot;$ISAAC_LAB_PATH/apps/isaaclab.python.kit&quot;# 1. 删除 Omniverse 通用缓存 (包含旧版扩展记录)rm -rf ~/.cache/ovrm -rf ~/.cache/nvidia/GLCache# 2. 删除着色器缓存 (强制 5.1 重新生成)rm -rf ~/.nvidia-shader-cache# 3. 删除 Isaac Sim 5.1 的运行缓存（需要修改路径！！！！）rm -rf ~/isaac-sim-standalone-5.1.0-linux-x86_64/kit/data/Kit/Isaac-Sim/5.1/cachecd $PROJECT_ROOT$ISAACSIM_PATH/python.sh ./scripts/rsl_rl/train.py \    --task Velocity-Berkeley-Humanoid-Lite-v0 \    --num_envs 1024 \    &quot;$@&quot;      # 确保后面有 &quot;$@&quot;，这样在外面输入的 --resume 才能传给 python
+
+版本残留Isaac Lab 在安装时会扫描 _isaac_sim 链接并生成固定的路径映射。
+运行下面的重置 Isaac Lab 的版本映射的命令即可
+# 1. 进入 IsaacLab 目录cd ~/IsaacLab# 2. 强制更正软链接 (确保指向 5.1)ln -sfn /home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64 _isaac_sim# 3. 彻底删除旧版配置残留 (如果 5.1 的配置文件夹没生成，就从 4.5 复制一份)if [ ! -d &quot;apps/isaacsim_5_1&quot; ]; then    cp -r apps/isaacsim_4_5 apps/isaacsim_5_1fi# 4. [关键] 强制重新安装 Isaac Lab 核心# 使用 --force-reinstall 确保 egg-info 里的路径元数据被重写conda activate berkeley-humanoid-litepip install -e source/isaaclab --force-reinstall --no-build-isolation
+
+RSL-RL 算法库的结构性矛盾不使用 Isaac Lab 自动安装的 RSL-RL 4.0就可以了
+在 Isaac Sim 内部环境中强制降级，以匹配机器人的 PPO 配置。
+# 确保已 conda deactivate，在终端 A 执行export ISAACSIM_PATH=&quot;/home/mryan2005/isaac-sim-standalone-5.1.0-linux-x86_64&quot;# 1. 卸载新版$ISAACSIM_PATH/python.sh -m pip uninstall -y rsl-rl-lib# 2. 安装完全匹配的旧版$ISAACSIM_PATH/python.sh -m pip install git+https://github.com/leggedrobotics/rsl_rl.git@v1.0.2
+
+Isaac Lab 0.54+ API 的剧烈变动修改 .&#x2F;scripts&#x2F;rsl_rl&#x2F;playNew.py 的代码我们可以按照 train.py 来写一个 playNew.py 的代码，从而可以看到训练结果
+&quot;&quot;&quot;使用 RSL-RL v1.0.2 推理/预览 Berkeley Humanoid Lite 的脚本。结构严格仿照 train.py，适配 Isaac Sim 5.1。&quot;&quot;&quot;import argparseimport osimport sysimport torch# --- [1] 初始化 AppLauncher (必须最先导入) ---from isaaclab.app import AppLauncher# 解决本地导入sys.path.append(os.path.dirname(os.path.abspath(__file__)))import cli_args  # isort: skipparser = argparse.ArgumentParser(description=&quot;Play/Inference with RSL-RL agent.&quot;)parser.add_argument(&quot;--num_envs&quot;, type=int, default=1, help=&quot;仿真环境数量(预览通常为1)&quot;)parser.add_argument(&quot;--task&quot;, type=str, default=None, help=&quot;任务名称&quot;)parser.add_argument(&quot;--seed&quot;, type=int, default=None, help=&quot;随机种子&quot;)# 添加 RSL-RL 参数cli_args.add_rsl_rl_args(parser)AppLauncher.add_app_launcher_args(parser)args_cli, hydra_args = parser.parse_known_args()# 强制开启图形界面args_cli.headless = Falsesys.argv = [sys.argv[0]] + hydra_argsapp_launcher = AppLauncher(args_cli)simulation_app = app_launcher.app# --- [2] 仿真启动后的导入 ---import gymnasium as gymfrom omegaconf import OmegaConffrom rsl_rl.runners import OnPolicyRunnerfrom rsl_rl.algorithms import PPOfrom rsl_rl.modules import ActorCriticfrom isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agentfrom isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapperfrom isaaclab_tasks.utils import get_checkpoint_pathfrom isaaclab_tasks.utils.hydra import hydra_task_configfrom isaaclab.utils.dict import class_to_dictimport berkeley_humanoid_lite.tasks  # noqa: F401# --- [兼容层] 复用 Wrapper ---class RslRlVecEnvWrapperFixed(RslRlVecEnvWrapper):    def __init__(self, env):        self.env = env        base_env = env.unwrapped        self.unwrapped_env = base_env         self.device = base_env.device                obs_manager = base_env.observation_manager                def _to_int(val):            if isinstance(val, (tuple, list)): return int(val[0])            return int(val)        self.num_obs = _to_int(obs_manager.group_obs_dim[&quot;policy&quot;])        self.num_actions = _to_int(base_env.action_manager.total_action_dim)        self.num_envs = base_env.num_envs        if &quot;critic&quot; in obs_manager.group_obs_dim:            self.num_privileged_obs = _to_int(obs_manager.group_obs_dim[&quot;critic&quot;])        else:            self.num_privileged_obs = None                    self.episode_length_buf = base_env.episode_length_buf    def _strip_tensordict(self, obs):        if obs is None: return None        if not isinstance(obs, torch.Tensor):            if isinstance(obs, dict):                return torch.cat(list(obs.values()), dim=-1)        return obs.view(obs.shape)    def get_observations(self):        obs = self.unwrapped.observation_manager.compute_group(&quot;policy&quot;)        return self._strip_tensordict(obs)    def get_privileged_observations(self):        if self.num_privileged_obs is not None:            obs = self.unwrapped.observation_manager.compute_group(&quot;critic&quot;)            return self._strip_tensordict(obs)        return None    def step(self, actions):        obs_dict, rew, terminated, truncated, extras = self.env.step(actions)        obs = self._strip_tensordict(obs_dict[&quot;policy&quot;])        privileged_obs = None        if &quot;critic&quot; in obs_dict:            privileged_obs = self._strip_tensordict(obs_dict[&quot;critic&quot;])        elif self.num_privileged_obs is not None:            privileged_obs = self.get_privileged_observations()        dones = terminated | truncated        return obs, privileged_obs, rew, dones, extras        def reset(self):        obs_dict, _ = self.env.reset()        obs = self._strip_tensordict(obs_dict[&quot;policy&quot;])        return obs, self.get_privileged_observations()# --- [参数过滤器] ---def filter_dict(raw_dict, whitelist):    return &#123;k: v for k, v in raw_dict.items() if k in whitelist&#125;PPO_WHITELIST = [&#x27;value_loss_coef&#x27;, &#x27;use_clipped_value_loss&#x27;, &#x27;clip_param&#x27;, &#x27;entropy_coef&#x27;,                  &#x27;num_learning_epochs&#x27;, &#x27;num_mini_batches&#x27;, &#x27;learning_rate&#x27;, &#x27;schedule&#x27;,                  &#x27;gamma&#x27;, &#x27;lam&#x27;, &#x27;desired_kl&#x27;, &#x27;max_grad_norm&#x27;]POLICY_WHITELIST = [&#x27;init_noise_std&#x27;, &#x27;actor_hidden_dims&#x27;, &#x27;critic_hidden_dims&#x27;, &#x27;activation&#x27;]# -------------------------------------------------------@hydra_task_config(args_cli.task, &quot;rsl_rl_cfg_entry_point&quot;)def main(env_cfg, agent_cfg: RslRlOnPolicyRunnerCfg):    # 1. 同步参数    agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)    env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else 1    # === 地形与高度修正 ===    if hasattr(env_cfg.scene, &quot;terrain&quot;):        print(&quot;[INFO] Play模式: 强制地形为无限平面 (Plane)&quot;)        env_cfg.scene.terrain.terrain_type = &quot;plane&quot;        env_cfg.scene.terrain.terrain_generator = None         if hasattr(env_cfg.scene, &quot;robot&quot;):        env_cfg.scene.robot.init_state.pos = (0.0, 0.0, 0)        print(&quot;[INFO] Play模式: 强制初始高度为 1.05m&quot;)    # 2. 设置日志根目录    log_root_path = os.path.join(&quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name)    log_root_path = os.path.abspath(log_root_path)        # 3. 寻找 Checkpoint    load_run = agent_cfg.load_run    if load_run == &quot;-1&quot;:        load_run = None        resume_path = None    try:        resume_path = get_checkpoint_path(log_root_path, load_run, agent_cfg.load_checkpoint)        print(f&quot;[INFO] 加载模型路径: &#123;resume_path&#125;&quot;)    except Exception as e:        print(f&quot;[ERROR] 无法找到模型 checkpoint: &#123;e&#125;&quot;)        simulation_app.close()        sys.exit(1)    # 4. 创建环境    print(f&quot;[INFO] 正在创建环境: &#123;args_cli.task&#125;&quot;)    env = gym.make(args_cli.task, cfg=env_cfg)    if isinstance(env.unwrapped, DirectMARLEnv):        env = multi_agent_to_single_agent(env)        env = RslRlVecEnvWrapperFixed(env)    # 5. 构造 Runner 配置    raw_dict = class_to_dict(agent_cfg) if not isinstance(agent_cfg, dict) else agent_cfg        # === [关键修复] 补全 runner 所需的所有键值 ===    rsl_cfg = &#123;        &quot;runner&quot;: &#123;            &quot;policy_class_name&quot;: &quot;ActorCritic&quot;,            &quot;algorithm_class_name&quot;: &quot;PPO&quot;,            &quot;experiment_name&quot;: agent_cfg.experiment_name,            &quot;checkpoint&quot;: resume_path,                        # --- 以下是本次修复补充的必要参数 ---            &quot;num_steps_per_env&quot;: agent_cfg.num_steps_per_env,  # 解决 KeyError            &quot;max_iterations&quot;: agent_cfg.max_iterations,        # 初始化需要            &quot;save_interval&quot;: agent_cfg.save_interval,          # 初始化需要            &quot;run_name&quot;: agent_cfg.run_name,        &#125;,        &quot;algorithm&quot;: filter_dict(raw_dict.get(&quot;algorithm&quot;, &#123;&#125;), PPO_WHITELIST),        &quot;policy&quot;: filter_dict(raw_dict.get(&quot;policy&quot;, &#123;&#125;), POLICY_WHITELIST),    &#125;    # 6. 初始化 Runner    # log_dir=None 表示不创建新的日志文件夹    runner = OnPolicyRunner(env, rsl_cfg, log_dir=None, device=agent_cfg.device)    runner.load(resume_path)        policy = runner.get_inference_policy(device=env.device)    # 7. 推理循环    print(&quot;-&quot; * 80)    print(&quot;[INFO] 启动成功！在 Isaac Sim 中按 &#x27;F&#x27; 键跟随机器人。&quot;)    print(&quot;-&quot; * 80)    obs, _ = env.reset()    while simulation_app.is_running():        with torch.inference_mode():            actions = policy(obs)            obs, _, _, _, _ = env.step(actions)    env.close()if __name__ == &quot;__main__&quot;:    main()    simulation_app.close()
+
+修改 .&#x2F;scripts&#x2F;rsl_rl&#x2F;train.py 的代码# scripts/rsl_rl/train.pyimport argparseimport osimport sys# --- [关键] 1. 初始化 AppLauncher (必须最先导入) ---from isaaclab.app import AppLauncher# 将当前目录加入路径以便导入 cli_args.pysys.path.append(os.path.dirname(os.path.abspath(__file__)))import cli_args# 解析参数parser = argparse.ArgumentParser(description=&quot;Train an RL agent with RSL-RL.&quot;)parser.add_argument(&quot;--video&quot;, action=&quot;store_true&quot;, default=False, help=&quot;是否在训练中录制视频&quot;)parser.add_argument(&quot;--video_length&quot;, type=int, default=200, help=&quot;录制视频步数&quot;)parser.add_argument(&quot;--disable_fabric&quot;, action=&quot;store_true&quot;, default=False, help=&quot;禁用 Fabric&quot;)parser.add_argument(&quot;--num_envs&quot;, type=int, default=None, help=&quot;仿真环境数量&quot;)parser.add_argument(&quot;--task&quot;, type=str, default=None, help=&quot;任务名称&quot;)parser.add_argument(&quot;--seed&quot;, type=int, default=None, help=&quot;随机种子&quot;)# 添加 RSL-RL 和 AppLauncher 的参数cli_args.add_rsl_rl_args(parser)AppLauncher.add_app_launcher_args(parser)args_cli, _ = parser.parse_known_args()# 启动仿真 Appapp_launcher = AppLauncher(args_cli)simulation_app = app_launcher.app# --- [关键] 2. 仿真启动后的导入 ---import gymnasium as gymimport datetimeimport pickleimport torchfrom omegaconf import OmegaConffrom rsl_rl.runners import OnPolicyRunnerimport isaaclab.utils.dict as dict_utilsfrom isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agentfrom isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapperfrom isaaclab_tasks.utils import parse_env_cfg# 导入自定义任务包以注册环境import berkeley_humanoid_lite.tasks  # noqa: F401def main():    &quot;&quot;&quot;训练主函数&quot;&quot;&quot;        # 1. 解析环境配置    env_cfg = parse_env_cfg(        args_cli.task,         device=args_cli.device,         num_envs=args_cli.num_envs if args_cli.num_envs is not None else 4096,         use_fabric=not args_cli.disable_fabric    )    if args_cli.seed is not None:        env_cfg.seed = args_cli.seed    # 2. 解析 RSL-RL Agent 配置    agent_cfg: RslRlOnPolicyRunnerCfg = cli_args.parse_rsl_rl_cfg(args_cli.task, args_cli)    # 3. 设置日志目录    log_dir = os.path.join(        &quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name,         datetime.datetime.now().strftime(&quot;%Y-%m-%d_%H-%M-%S&quot;)    )    os.makedirs(log_dir, exist_ok=True)    # 4. 创建环境    render_mode = &quot;rgb_array&quot; if args_cli.video else None    env = gym.make(args_cli.task, cfg=env_cfg, render_mode=render_mode)    # 5. 录制视频包装    if args_cli.video:        video_kwargs = &#123;            &quot;video_folder&quot;: os.path.join(log_dir, &quot;videos&quot;, &quot;train&quot;),            &quot;step_trigger&quot;: lambda step: step % 1000 == 0, # 每 1000 步录一段            &quot;video_length&quot;: args_cli.video_length,            &quot;disable_logger&quot;: True,        &#125;        env = gym.wrappers.RecordVideo(env, **video_kwargs)    # 6. 环境包装    if isinstance(env.unwrapped, DirectMARLEnv):        env = multi_agent_to_single_agent(env)    env = RslRlVecEnvWrapper(env)    # 7. 保存配置 (修复之前报错的关键点)    # 使用 OmegaConf 和 Pickle 替代已删除的 dump_yaml/dump_pickle    config_dir = os.path.join(log_dir, &quot;configs&quot;)    os.makedirs(config_dir, exist_ok=True)        # 导出 Agent 配置    with open(os.path.join(config_dir, &quot;agent.yaml&quot;), &quot;w&quot;) as f:        f.write(OmegaConf.to_yaml(agent_cfg))        # 导出环境配置 (Pickle 备份)    with open(os.path.join(config_dir, &quot;env_cfg.pkl&quot;), &quot;wb&quot;) as f:        pickle.dump(env_cfg, f)    # 8. 初始化并运行训练    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)        # 如果指定了 resume，则加载旧模型    if agent_cfg.resume:        from isaaclab_tasks.utils import get_checkpoint_path        resume_path = get_checkpoint_path(            os.path.join(&quot;logs&quot;, &quot;rsl_rl&quot;, agent_cfg.experiment_name),             agent_cfg.load_run,             agent_cfg.load_checkpoint        )        print(f&quot;[INFO] Resuming from checkpoint: &#123;resume_path&#125;&quot;)        runner.load(resume_path)    print(f&quot;[INFO] 训练正式开始...&quot;)    runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)    # 9. 资源清理    env.close()if __name__ == &quot;__main__&quot;:    main()    simulation_app.close()
+
+硬件与底层渲染障碍其实，这个部分要解决也很简单的，就是就该参数num_envs就可以了，一般情况下，按照这样的阶梯设置512、1024、2048、4096来设置。
+]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>创建一个简单的世界</title>
+    <url>/2026/01/29/create-a-simple-world/</url>
+    <content><![CDATA[如何启动 Isaac Sim在 VS Code 内输入以下代码
+from isaacsim import SimulationAppsimulation_app = SimulationApp(&#123;&quot;headless&quot;: False&#125;)from isaacsim.core.api import Worldworld = World(stage_units_in_meters=1.0)world.reset()while simulation_app.is_running():    world.step(render=True)simulation_app.close()
+
+理论上，如果配置成功，你就会看到 Isaac Sim Python 5.1
+加载 Ros 2 Bridge 等扩展import omni.kit.appfrom isaacsim.core.utils.extensions import enable_extension# 先启用扩展enable_extension(&quot;omni.graph.action&quot;)enable_extension(&quot;omni.syntheticdata&quot;)enable_extension(&quot;isaacsim.ros2.bridge&quot;)  # 新版扩展名enable_extension(&quot;omni.isaac.ros2_bridge&quot;)  # 兼容旧版enable_extension(&quot;omni.replicator.core&quot;)    # 用于 render_product# 让扩展完全加载for _ in range(10):    omni.kit.app.get_app().update()
+
+获得舞台stage = world.stage
+
+创建一个默认的地面from isaacsim.core.utils.prims import create_primcreate_prim(&quot;/World/GroundPlane&quot;, &quot;Xform&quot;)world.scene.add_default_ground_plane()
+
+创建灯光sun = UsdLux.DistantLight.Define(stage, &quot;/World/SunLight&quot;)sun.CreateIntensityAttr(2000.0)sun.CreateAngleAttr(1.0)
+
+创建一个 Cubefrom isaacsim.core.api.objects.cuboid import DynamicCuboidfrom pxr import UsdGeomcube = DynamicCuboid(    prim_path=&quot;/World/Cube&quot;,    name=&quot;cube&quot;,    position=(0.6, 0.0, 0.4),    size=0.08,)world.scene.add(cube)cube_prim = stage.GetPrimAtPath(&quot;/World/Cube&quot;)UsdGeom.Gprim(cube_prim).CreateDisplayColorAttr([(1.0, 0.2, 0.2)])
+
+
+且看上面的代码我们在 $x$ 为 0.6, $y$ 为 0.0, $z$ 为 0.4 的地方上面创建了一个大小是 0.08 的 cube
+
+创建一个 Franka 机械臂FRANKA_USD = (    &quot;https://omniverse-content-production.s3-us-west-2.amazonaws.com/&quot;    &quot;Assets/Isaac/5.1/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd&quot;)franka = stage.DefinePrim(&quot;/World/FrankaRoot/Franka&quot;, &quot;Xform&quot;)franka.GetReferences().AddReference(FRANKA_USD)franka.Load()
+
+
+引入一个在线的 usd 资产，最好使用 https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/ + xxxx如何查看呢？看下图选择 Copy URL Link 即可
+
+源代码点击前往 GitHub 查看
+]]></content>
+      <categories>
+        <category>初级</category>
+      </categories>
+      <tags>
+        <tag>Isaac Sim</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>连接到在另一台计算机上运行的Subscriber</title>
+    <url>/2026/02/13/link-to-Subscriber-which-is-running-in-other-computer/</url>
+    <content><![CDATA[何为“另一台计算机”你可以认为是处于同一局域网内的另一台计算机，或者是通过VPN连接的远程计算机。
+譬如，发布者计算机的 Ip 地址是 192.168.0.3，监听者计算机的 Ip 地址是 192.168.0.103.
+实现办法设置 ROS_DOMAIN_IDROS 2 使用 ROS_DOMAIN_ID 来隔离网络中的不同机器人群组。
+所有电脑必须使用相同的 Domain ID。
+默认 ID 是 0。
+我们可以在发布者和监听者的电脑上设置相同的 ROS_DOMAIN_ID，例如：
+export ROS_DOMAIN_ID=30
+
+即将 ROS_DOMAIN_ID 设置为 30，当然，你也可以选择其他数字，只要确保发布者和监听者使用相同的值即可。
+设置 ROS_LOCALHOST_ONLYROS_LOCALHOST_ONLY 就是“仅本机模式”，如果设置为 1，ROS 2 将只在本地计算机上进行通信，不会与其他计算机进行通信。
+因此，在发布者和监听者的电脑上都需要将 ROS_LOCALHOST_ONLY 设置为 0，以允许跨计算机通信：
+export ROS_LOCALHOST_ONLY=0
+
+暂时关闭防火墙DDS 使用 UDP 协议进行大量通信。
+Linux 的防火墙（如 ufw 或 iptables）经常会拦截这些包。
+因此，在发布者和监听者的电脑上暂时关闭防火墙，以确保 DDS 通信畅通：
+sudo ufw disable
+
+运行 node_one.py在发布者计算机上运行 node_one.py：
+python3 node_one.py
+
+在监听者计算机上检查时候能否看到发布者的主题在监听者计算机上运行以下命令，查看是否能够看到发布者的主题：
+ros2 topic list
+
+如果一切设置正确，你应该能够看到发布者的主题，例如 /chatter。
+此时，你可以在监听者计算机上运行 ros2 topic echo /chatter 来查看发布者发送的消息：
+ros2 topic echo /chatter
+
+如果topic echo能够显示发布者发送的消息，那么你已经成功连接到在另一台计算机上运行的Subscriber了。
+源码GitHub: IsaacSimPlusROS2&#x2F;An-Easy-Ros-2-Program
+]]></content>
+      <categories>
+        <category>ROS 2</category>
+      </categories>
+      <tags>
+        <tag>ROS 2</tag>
+        <tag>Ubuntu</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>什么是 FrankaPanda</title>
+    <url>/2026/02/02/what-is-franka-panda/</url>
+    <content><![CDATA[FrankaPanda 的长相
+用 Python 代码加载 FrankaPandafrom omni.isaac.franka import Frankaworld = World(stage_units_in_meters=1.0)world.scene.add_default_ground_plane()stage = world.stageFRANKA_USD = (    &quot;https://omniverse-content-production.s3-us-west-2.amazonaws.com/&quot;    &quot;Assets/Isaac/5.1/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd&quot;)franka_root = stage.DefinePrim(&quot;/World/FrankaRoot&quot;, &quot;Xform&quot;)franka_prim = stage.DefinePrim(&quot;/World/FrankaRoot/Franka&quot;, &quot;Xform&quot;)franka_prim.GetReferences().AddReference(FRANKA_USD)franka_prim.Load()# 包装为机器人对象franka_robot = world.scene.add(    Franka(        prim_path=&quot;/World/FrankaRoot/Franka&quot;,         name=&quot;my_franka&quot;    ))
+
+FrankaPandas 控制器的代码（非 ROS 2）from omni.isaac.franka.controllers import PickPlaceControllercontroller = PickPlaceController(    name=&quot;pick_place_controller&quot;,    gripper=franka_robot.gripper,    robot_articulation=franka_robot)
+
+FrankaPandas 的基础动作引入动作模块import numpy as npfrom omni.isaac.core.utils.types import ArticulationAction
+
+爪子控制张开动作action = franka_robot.gripper.forward(action=&quot;open&quot;)franka_robot.apply_action(action)   # 应用动作
+
+闭合爪子 (抓取)action = franka_robot.gripper.forward(action=&quot;close&quot;)franka_robot.apply_action(action)   # 应用动作]]></content>
+      <categories>
+        <category>FrankaPanda</category>
+      </categories>
+      <tags>
+        <tag>Isaac Sim</tag>
+        <tag>Franka</tag>
+        <tag>FrankaPanda</tag>
+      </tags>
+  </entry>
+</search>
