@@ -132,6 +132,40 @@ source isaac-sim地址/setup_conda_env.shsource isaac-sim地址/setup_ros_env.sh
       </tags>
   </entry>
   <entry>
+    <title>弄一个简单的 ROS 2 程序</title>
+    <url>/2026/02/13/Make-an-Easy-ROS-2-Program/</url>
+    <content><![CDATA[前提条件确保你的 Conda 环境中安装了 rclpy 包。如果没有安装，可以使用以下命令进行安装：
+pip install rclpy
+
+创建 ROS 2 发布节点创建一个名为 simple_ros2_node.py 的 Python 文件，并添加以下代码：
+import rclpyfrom rclpy.node import Nodefrom std_msgs.msg import Stringclass MyRobotNode(Node):    def __init__(self):        super().__init__(&#x27;robot_brain&#x27;)        # 创建一个发布者，发布到 &#x27;chatter&#x27; 话题        self.publisher_ = self.create_publisher(String, &#x27;chatter&#x27;, 10)        # 每 3 秒发一次        self.timer = self.create_timer(3, self.timer_callback)    def timer_callback(self):        msg = String()        msg.data = &#x27;Robot is walking...&#x27;        self.publisher_.publish(msg)        self.get_logger().info(&#x27;Publishing: &quot;%s&quot;&#x27; % msg.data)def main():    rclpy.init() # 初始化    node = MyRobotNode()    rclpy.spin(node) # 开始循环处理    rclpy.shutdown() # 关闭if __name__ == &#x27;__main__&#x27;:    main()
+
+创建 ROS 2 监听节点import rclpyfrom rclpy.node import Nodefrom std_msgs.msg import Stringclass MinimalSubscriber(Node):    def __init__(self):        super().__init__(&#x27;minimal_subscriber&#x27;) # 初始化节点名称                # 创建订阅者：消息类型 String, 话题名称 &#x27;chatter&#x27;, 回调函数, 队列长度 10        self.subscription = self.create_subscription(            String,            &#x27;chatter&#x27;,            self.listener_callback,            10)        self.subscription  # 防止变量被垃圾回收 (Python特性)    def listener_callback(self, msg):        # 收到消息时的回调函数        self.get_logger().info(&#x27;I heard: &quot;%s&quot;&#x27; % msg.data)def main(args=None):    rclpy.init(args=args)    minimal_subscriber = MinimalSubscriber()    rclpy.spin(minimal_subscriber)    minimal_subscriber.destroy_node()    rclpy.shutdown()if __name__ == &#x27;__main__&#x27;:    main()
+
+运行节点在终端中运行以下命令来启动你的 ROS 2 节点：
+python node_one.py
+
+此时，你运行 ros2 topic list 会看到 /chatter。
+
+监听 node_one.py 发出的东西在终端中运行以下命令：
+ros2 topic echo /chatter
+
+你就会看到 data: Robot is walking...
+或者
+python node_two.py 
+
+你就会看到 [INFO] [1770962759.315087388] [minimal_subscriber]: I heard: &quot;Robot is walking...&quot;
+源码GitHub: IsaacSimPlusROS2&#x2F;An-Easy-Ros-2-Program
+]]></content>
+      <categories>
+        <category>ROS 2</category>
+      </categories>
+      <tags>
+        <tag>ROS 2</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Berkeley Humanoid Lite 的 scripts/sim2real/visualize.py</title>
     <url>/2026/02/11/The-Berkeley-Humanoid-Lite-scripts-sim2real-visualize-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
     <content><![CDATA[scripts/sim2real/visualize.py 只负责接收数据并画图，不负责控制逻辑。
@@ -172,38 +206,9 @@ visualizer.step 会根据缓冲区里的最新数据（由 UDP 线程不断刷�
     <content><![CDATA[]]></content>
   </entry>
   <entry>
-    <title>弄一个简单的 ROS 2 程序</title>
-    <url>/2026/02/13/Make-an-Easy-ROS-2-Program/</url>
-    <content><![CDATA[前提条件确保你的 Conda 环境中安装了 rclpy 包。如果没有安装，可以使用以下命令进行安装：
-pip install rclpy
-
-创建 ROS 2 发布节点创建一个名为 simple_ros2_node.py 的 Python 文件，并添加以下代码：
-import rclpyfrom rclpy.node import Nodefrom std_msgs.msg import Stringclass MyRobotNode(Node):    def __init__(self):        super().__init__(&#x27;robot_brain&#x27;)        # 创建一个发布者，发布到 &#x27;chatter&#x27; 话题        self.publisher_ = self.create_publisher(String, &#x27;chatter&#x27;, 10)        # 每 3 秒发一次        self.timer = self.create_timer(3, self.timer_callback)    def timer_callback(self):        msg = String()        msg.data = &#x27;Robot is walking...&#x27;        self.publisher_.publish(msg)        self.get_logger().info(&#x27;Publishing: &quot;%s&quot;&#x27; % msg.data)def main():    rclpy.init() # 初始化    node = MyRobotNode()    rclpy.spin(node) # 开始循环处理    rclpy.shutdown() # 关闭if __name__ == &#x27;__main__&#x27;:    main()
-
-创建 ROS 2 监听节点import rclpyfrom rclpy.node import Nodefrom std_msgs.msg import Stringclass MinimalSubscriber(Node):    def __init__(self):        super().__init__(&#x27;minimal_subscriber&#x27;) # 初始化节点名称                # 创建订阅者：消息类型 String, 话题名称 &#x27;chatter&#x27;, 回调函数, 队列长度 10        self.subscription = self.create_subscription(            String,            &#x27;chatter&#x27;,            self.listener_callback,            10)        self.subscription  # 防止变量被垃圾回收 (Python特性)    def listener_callback(self, msg):        # 收到消息时的回调函数        self.get_logger().info(&#x27;I heard: &quot;%s&quot;&#x27; % msg.data)def main(args=None):    rclpy.init(args=args)    minimal_subscriber = MinimalSubscriber()    rclpy.spin(minimal_subscriber)    minimal_subscriber.destroy_node()    rclpy.shutdown()if __name__ == &#x27;__main__&#x27;:    main()
-
-运行节点在终端中运行以下命令来启动你的 ROS 2 节点：
-python node_one.py
-
-此时，你运行 ros2 topic list 会看到 /chatter。
-
-监听 node_one.py 发出的东西在终端中运行以下命令：
-ros2 topic echo /chatter
-
-你就会看到 data: Robot is walking...
-或者
-python node_two.py 
-
-你就会看到 [INFO] [1770962759.315087388] [minimal_subscriber]: I heard: &quot;Robot is walking...&quot;
-源码GitHub: IsaacSimPlusROS2&#x2F;An-Easy-Ros-2-Program
-]]></content>
-      <categories>
-        <category>ROS 2</category>
-      </categories>
-      <tags>
-        <tag>ROS 2</tag>
-        <tag>Python</tag>
-      </tags>
+    <title>The imu.py of Berkeley Humanoid Lite Lowlevel</title>
+    <url>/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
+    <content><![CDATA[]]></content>
   </entry>
   <entry>
     <title>Berkeley Humanoid Lite Lowlevel 的 humanoid.py</title>
@@ -299,11 +304,6 @@ for entry in self.joints:    # 解包关节信息：总线对象、电机ID、�
         <tag>Python</tag>
         <tag>Berkeley Humanoid Lite</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>The imu.py of Berkeley Humanoid Lite Lowlevel</title>
-    <url>/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
-    <content><![CDATA[]]></content>
   </entry>
   <entry>
     <title>Berkeley Humanoid Lite 的 mujoco.py</title>
@@ -418,9 +418,46 @@ num_actions: 12action_scale: 0.25action_indices:- 0- 1- 2- 3- 4- 5- 6- 7- 8- 9- 
       </tags>
   </entry>
   <entry>
-    <title>The recoil/can.py of Berkeley Humanoid Lite Lowlevel</title>
+    <title>Berkeley Humanoid Lite Lowlevel 的 recoil/can.py</title>
     <url>/2026/02/10/The-recoil-can-py-of-Berkeley-Humanoid-Lite-Lowlevel/</url>
-    <content><![CDATA[]]></content>
+    <content><![CDATA[DataFrame 的定义一个通用的数据帧结构，用于存储通信协议中的基本信息，并强制执行数据长度的一致性检查。
+class DataFrame:    def __init__(        self,        device_id: int = 0,        func_id: int | None = None,        size: int = 0,        data: bytes | bytearray = b&quot;&quot;    ):        self.device_id = device_id        self.func_id = func_id        self.size = size        self.data = data        assert self.size == len(self.data)
+
+参数详解：
+
+device_id: 设备 ID（整数），用于标识发送者或接收者。
+func_id: 功能 ID（整数或 None）。用于标识这条指令是做什么的（例如：读数据、写数据、心跳包）。
+size：数据长度（整数）。声明 data 中包含多少字节。
+data：实际的数据载荷，类型可以是 bytes 或 bytearray，表明它可以是不可变的字节串（b&#39;\x01&#39;）或可变的字节数组。
+
+assert self.size == len(self.data) 这一行代码确保了 size 参数与 data 的实际长度一致，防止数据不完整或过长的情况发生。
+CANFrame 的定义三个常量定义class CANFrame(DataFrame):    ID_STANDARD = 0    ID_EXTENDED = 1    DEVICE_ID_MSK = 0x7F    FUNC_ID_POS = 7    FUNC_ID_MSK = 0x0F &lt;&lt; FUNC_ID_POS
+
+ID_STANDARD &#x2F; ID_EXTENDED：定义 CAN 帧 ID 的类型。
+
+0 (标准帧)：使用 11 位标识符（CAN 2.0A）。
+1 (扩展帧)：使用 29 位标识符（CAN 2.0B）。
+
+DEVICE_ID_MSK：设备 ID 的掩码，0x7F 表示设备 ID 只能占用 7 位（0-127），设备ID的范围是 0 到 127。FUNC_ID_POS：功能 ID 在 CAN 帧中的位置，定义为 7，表示功能 ID 从第 7 位开始（即第 8 个比特，因为从 0 开始计数）。FUNC_ID_MSK：功能 ID 的掩码，0x0F 的二进制是 1111（4个比特），&lt;&lt; 7 表示左移 7 位，结果掩码覆盖了 ID 的 高 4 位（第 7 到 10 位），这意味着 功能ID 占据了 4 个比特。
+__init__ 方法def __init__(        self,        device_id: int = 0,        func_id: int | None = None,        size: int = 0,        data: bytes = b&quot;&quot;    ):        super().__init__(device_id, func_id, size, data)        assert self.size &lt;= 8
+
+参数列表：
+
+device_id：设备标识符，默认为 0。
+func_id：功能标识符，类型提示允许是 int 或 None。
+size：数据长度，默认为 0。
+data：实际的数据载荷，默认为空字节串 (b””)。
+
+super().__init__(device_id, func_id, size, data) 调用父类 DataFrame 的构造函数，初始化基本属性。
+assert self.size &lt;= 8 确保 CAN 帧的数据长度不超过 8 字节，这是 CAN 协议的限制。
+]]></content>
+      <categories>
+        <category>Berkeley Humanoid Lite</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Berkeley Humanoid Lite</tag>
+      </tags>
   </entry>
   <entry>
     <title>The recoil/core.py of Berkeley Humanoid Lite Lowlevel</title>
@@ -470,6 +507,41 @@ Isaac Lab 0.54+ API 的剧烈变动修改 .&#x2F;scripts&#x2F;rsl_rl&#x2F;playNe
       <tags>
         <tag>Python</tag>
         <tag>Berkeley Humanoid Lite</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>创建一个简单的世界</title>
+    <url>/2026/01/29/create-a-simple-world/</url>
+    <content><![CDATA[如何启动 Isaac Sim在 VS Code 内输入以下代码
+from isaacsim import SimulationAppsimulation_app = SimulationApp(&#123;&quot;headless&quot;: False&#125;)from isaacsim.core.api import Worldworld = World(stage_units_in_meters=1.0)world.reset()while simulation_app.is_running():    world.step(render=True)simulation_app.close()
+
+理论上，如果配置成功，你就会看到 Isaac Sim Python 5.1
+加载 Ros 2 Bridge 等扩展import omni.kit.appfrom isaacsim.core.utils.extensions import enable_extension# 先启用扩展enable_extension(&quot;omni.graph.action&quot;)enable_extension(&quot;omni.syntheticdata&quot;)enable_extension(&quot;isaacsim.ros2.bridge&quot;)  # 新版扩展名enable_extension(&quot;omni.isaac.ros2_bridge&quot;)  # 兼容旧版enable_extension(&quot;omni.replicator.core&quot;)    # 用于 render_product# 让扩展完全加载for _ in range(10):    omni.kit.app.get_app().update()
+
+获得舞台stage = world.stage
+
+创建一个默认的地面from isaacsim.core.utils.prims import create_primcreate_prim(&quot;/World/GroundPlane&quot;, &quot;Xform&quot;)world.scene.add_default_ground_plane()
+
+创建灯光sun = UsdLux.DistantLight.Define(stage, &quot;/World/SunLight&quot;)sun.CreateIntensityAttr(2000.0)sun.CreateAngleAttr(1.0)
+
+创建一个 Cubefrom isaacsim.core.api.objects.cuboid import DynamicCuboidfrom pxr import UsdGeomcube = DynamicCuboid(    prim_path=&quot;/World/Cube&quot;,    name=&quot;cube&quot;,    position=(0.6, 0.0, 0.4),    size=0.08,)world.scene.add(cube)cube_prim = stage.GetPrimAtPath(&quot;/World/Cube&quot;)UsdGeom.Gprim(cube_prim).CreateDisplayColorAttr([(1.0, 0.2, 0.2)])
+
+
+且看上面的代码我们在 $x$ 为 0.6, $y$ 为 0.0, $z$ 为 0.4 的地方上面创建了一个大小是 0.08 的 cube
+
+创建一个 Franka 机械臂FRANKA_USD = (    &quot;https://omniverse-content-production.s3-us-west-2.amazonaws.com/&quot;    &quot;Assets/Isaac/5.1/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd&quot;)franka = stage.DefinePrim(&quot;/World/FrankaRoot/Franka&quot;, &quot;Xform&quot;)franka.GetReferences().AddReference(FRANKA_USD)franka.Load()
+
+
+引入一个在线的 usd 资产，最好使用 https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/ + xxxx如何查看呢？看下图选择 Copy URL Link 即可
+
+源代码点击前往 GitHub 查看
+]]></content>
+      <categories>
+        <category>初级</category>
+      </categories>
+      <tags>
+        <tag>Isaac Sim</tag>
+        <tag>Python</tag>
       </tags>
   </entry>
   <entry>
@@ -534,41 +606,6 @@ FrankaPandas 的基础动作引入动作模块import numpy as npfrom omni.isaac.
         <tag>Isaac Sim</tag>
         <tag>Franka</tag>
         <tag>FrankaPanda</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>创建一个简单的世界</title>
-    <url>/2026/01/29/create-a-simple-world/</url>
-    <content><![CDATA[如何启动 Isaac Sim在 VS Code 内输入以下代码
-from isaacsim import SimulationAppsimulation_app = SimulationApp(&#123;&quot;headless&quot;: False&#125;)from isaacsim.core.api import Worldworld = World(stage_units_in_meters=1.0)world.reset()while simulation_app.is_running():    world.step(render=True)simulation_app.close()
-
-理论上，如果配置成功，你就会看到 Isaac Sim Python 5.1
-加载 Ros 2 Bridge 等扩展import omni.kit.appfrom isaacsim.core.utils.extensions import enable_extension# 先启用扩展enable_extension(&quot;omni.graph.action&quot;)enable_extension(&quot;omni.syntheticdata&quot;)enable_extension(&quot;isaacsim.ros2.bridge&quot;)  # 新版扩展名enable_extension(&quot;omni.isaac.ros2_bridge&quot;)  # 兼容旧版enable_extension(&quot;omni.replicator.core&quot;)    # 用于 render_product# 让扩展完全加载for _ in range(10):    omni.kit.app.get_app().update()
-
-获得舞台stage = world.stage
-
-创建一个默认的地面from isaacsim.core.utils.prims import create_primcreate_prim(&quot;/World/GroundPlane&quot;, &quot;Xform&quot;)world.scene.add_default_ground_plane()
-
-创建灯光sun = UsdLux.DistantLight.Define(stage, &quot;/World/SunLight&quot;)sun.CreateIntensityAttr(2000.0)sun.CreateAngleAttr(1.0)
-
-创建一个 Cubefrom isaacsim.core.api.objects.cuboid import DynamicCuboidfrom pxr import UsdGeomcube = DynamicCuboid(    prim_path=&quot;/World/Cube&quot;,    name=&quot;cube&quot;,    position=(0.6, 0.0, 0.4),    size=0.08,)world.scene.add(cube)cube_prim = stage.GetPrimAtPath(&quot;/World/Cube&quot;)UsdGeom.Gprim(cube_prim).CreateDisplayColorAttr([(1.0, 0.2, 0.2)])
-
-
-且看上面的代码我们在 $x$ 为 0.6, $y$ 为 0.0, $z$ 为 0.4 的地方上面创建了一个大小是 0.08 的 cube
-
-创建一个 Franka 机械臂FRANKA_USD = (    &quot;https://omniverse-content-production.s3-us-west-2.amazonaws.com/&quot;    &quot;Assets/Isaac/5.1/Isaac/Robots/FrankaRobotics/FrankaPanda/franka.usd&quot;)franka = stage.DefinePrim(&quot;/World/FrankaRoot/Franka&quot;, &quot;Xform&quot;)franka.GetReferences().AddReference(FRANKA_USD)franka.Load()
-
-
-引入一个在线的 usd 资产，最好使用 https://omniverse-content-production.s3-us-west-2.amazonaws.com/Assets/Isaac/5.1/Isaac/ + xxxx如何查看呢？看下图选择 Copy URL Link 即可
-
-源代码点击前往 GitHub 查看
-]]></content>
-      <categories>
-        <category>初级</category>
-      </categories>
-      <tags>
-        <tag>Isaac Sim</tag>
-        <tag>Python</tag>
       </tags>
   </entry>
 </search>
