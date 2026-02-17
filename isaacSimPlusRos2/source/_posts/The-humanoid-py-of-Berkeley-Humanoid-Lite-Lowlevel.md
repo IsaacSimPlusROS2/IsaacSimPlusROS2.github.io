@@ -1,5 +1,5 @@
 ---
-title: Berkeley Humanoid Lite Lowlevel 的 humanoid.py
+title: Berkeley Humanoid Lite Lowlevel 的 robot/humanoid.py
 date: 2026-02-10 20:25:21
 tags: [Berkeley Humanoid Lite, Python]
 categories: [Berkeley Humanoid Lite]
