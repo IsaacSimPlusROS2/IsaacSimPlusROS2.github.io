@@ -5,7 +5,7 @@ tags: [Berkeley Humanoid Lite, Python]
 categories: [Berkeley Humanoid Lite]
 ---
 
-## 代码详细解释
+## 代码概述
 
 1.  **硬件拓扑结构**:
     *   **左臂**: 连接在 `can0` 总线上，关节 ID 为奇数 (1, 3, 5, 7, 9)。

@@ -5,9 +5,8 @@ tags: [Berkeley Humanoid Lite, Python]
 categories: [Berkeley Humanoid Lite]
 ---
 
-## 代码功能详解
+## **核心逻辑**
 
-### **A. 核心逻辑**
 *   **通信协议**：IMU 通过串口发送二进制数据帧。每一帧以 `0x55` 开头，紧接着是**帧类型**（Frame Type），然后是数据载荷。
 *   **数据解析 (`__read_frame`)**：
     *   代码不断读取串口数据，利用 `struct.unpack` 将二进制数据转换为整数。
@@ -19,18 +18,18 @@ categories: [Berkeley Humanoid Lite]
     *   IMU 有写保护。修改配置前必须先调用 `unlock()` 发送特定密钥。
     *   修改后需调用 `save()` 将配置写入 EEPROM，否则掉电丢失。
 
-### **B. 主要类 `SerialImu` 的关键方法**
+### **主要类 `SerialImu` 的关键方法**
+
 *   **`__init__`**: 打开串口，初始化存储数据的 numpy 数组。
 *   **`__read_frame`**: 解析协议的核心。识别帧头 `0x55`，根据帧类型更新对应的属性（如 `self.angle`）。
 *   **`unlock`**: 写入寄存器 `0x69` 值为 `0xB588`，这是该硬件解除写保护的标准操作。
 *   **`set_output_content`**: 配置 IMU 每一轮发送哪些数据包（例如只发加速度和角速度，不发 GPS），通过位掩码实现。
 *   **`set_baudrate` / `set_sampling_rate`**: 修改通信速率和数据更新频率。
 
----
-
 ## Class 常量列表
 
 ### Class `ImuRegisters` (寄存器地址)
+
 该类定义了 IMU 内部寄存器的地址映射，用于配置和读取状态。
 
 | 分类 | 寄存器名称 | 地址 (Hex) | 描述 |
@@ -74,6 +73,7 @@ categories: [Berkeley Humanoid Lite]
 ---
 
 ### Class `FrameType` (返回数据帧类型)
+
 IMU 发回的数据包中，标识该包属于哪种数据的标识符（位于包头的 `0x55` 之后）。
 
 | 常量名称 | 值 (Hex) | 对应数据内容 |
@@ -94,6 +94,7 @@ IMU 发回的数据包中，标识该包属于哪种数据的标识符（位于�
 ---
 
 ### Class `SamplingRate` (采样率设置)
+
 用于写入 `RRATE` 寄存器，控制数据回传频率。
 
 | 常量名称 | 值 (Hex) | 频率 |
@@ -114,6 +115,7 @@ IMU 发回的数据包中，标识该包属于哪种数据的标识符（位于�
 ---
 
 ### Class `Baudrate` (波特率设置)
+
 用于写入 `BAUD` 寄存器以及初始化 `serial.Serial`。
 
 | 常量名称 | 值 (Hex) | 实际波特率 (bps) |
