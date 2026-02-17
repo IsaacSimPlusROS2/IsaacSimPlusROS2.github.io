@@ -7,7 +7,7 @@ categories: [Berkeley Humanoid Lite]
 
 根据您提供的代码，我将其中的常量类整理为表格，并对 `Bus` 类的核心方法进行了分类列表和说明。
 
-## 1. 常量类列表
+## 常量类列表
 
 ### Class `Function` (CAN功能码)
 
@@ -91,7 +91,7 @@ categories: [Berkeley Humanoid Lite]
 
 ---
 
-## 2. Class `Bus` 方法列表
+## Class `Bus` 方法列表
 
 `Bus` 类负责底层的 CAN 通信以及协议的封装。
 

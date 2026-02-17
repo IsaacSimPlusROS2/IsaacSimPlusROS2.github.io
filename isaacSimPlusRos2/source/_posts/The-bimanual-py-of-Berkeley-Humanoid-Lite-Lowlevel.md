@@ -29,7 +29,7 @@ categories: [Berkeley Humanoid Lite]
     *   `start()`: 设置力矩限制（Torque Limit），防止电机过载。
     *   `stop()`: 退出时进入 **DAMPING (阻尼)** 模式。这比直接断电更安全，因为电机产生的反电动势会阻碍手臂自由下坠，提供一种“软着陆”效果。
 
-## 1. 配置常量表 (Instance Configuration)
+## 配置常量表 (Instance Configuration)
 
 虽然这个类没有显式的 `Class Constants`（静态常量），但在 `__init__` 中定义了固定的硬件映射配置。以下是这些硬编码配置的表格形式：
 
@@ -69,7 +69,7 @@ categories: [Berkeley Humanoid Lite]
 
 ---
 
-## 2. Class `Bimanual` 方法列表
+## Class `Bimanual` 方法列表
 
 | 方法名 | 参数 | 描述 |
 | :--- | :--- | :--- |
