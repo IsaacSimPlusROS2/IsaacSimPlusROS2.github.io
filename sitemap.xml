@@ -20,34 +20,7 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/Train-the-Berkeley-Humanoid-Lite/</loc>
-    
-    <lastmod>2026-02-23</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/01/29/create-a-simple-world/</loc>
-    
-    <lastmod>2026-02-23</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/13/link-to-Subscriber-which-is-running-in-other-computer/</loc>
-    
-    <lastmod>2026-02-23</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/11/The-Berkeley-Humanoid-Lite-scripts-sim2real-visualize-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
     
     <lastmod>2026-02-23</lastmod>
     
@@ -65,15 +38,6 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/11/The-Berkeley-Humanoid-Lite-scripts-sim2real-visualize-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
-    
-    <lastmod>2026-02-23</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-bimanual-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
     
     <lastmod>2026-02-23</lastmod>
@@ -83,7 +47,7 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-humanoid-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
     
     <lastmod>2026-02-23</lastmod>
     
@@ -92,7 +56,7 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-imu-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-humanoid-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
     
     <lastmod>2026-02-23</lastmod>
     
@@ -129,6 +93,42 @@
   
   <url>
     <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/The-recoil-core-py-of-Berkeley-Humanoid-Lite-Lowlevel/</loc>
+    
+    <lastmod>2026-02-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/10/Train-the-Berkeley-Humanoid-Lite/</loc>
+    
+    <lastmod>2026-02-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/01/29/create-a-simple-world/</loc>
+    
+    <lastmod>2026-02-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/13/link-to-Subscriber-which-is-running-in-other-computer/</loc>
+    
+    <lastmod>2026-02-23</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://isaacsimplusros2.mryan2005.top/2026/02/02/what-is-franka-panda/</loc>
     
     <lastmod>2026-02-23</lastmod>
     
@@ -254,14 +254,14 @@
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/categories/ROS-2/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/categories/Berkeley-Humanoid-Lite/</loc>
     <lastmod>2026-02-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://isaacsimplusros2.mryan2005.top/categories/Berkeley-Humanoid-Lite/</loc>
+    <loc>https://isaacsimplusros2.mryan2005.top/categories/ROS-2/</loc>
     <lastmod>2026-02-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
